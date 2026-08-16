@@ -1,0 +1,7 @@
+body { font-family: Arial, sans-serif; padding: 16px; background:#f7f7f8 }
+.container { max-width: 980px; margin: 0 auto }
+.columns { display:flex; gap:16px }
+.card { background:white; padding:16px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.06); flex:1 }
+label { display:block; margin-top:8px; font-size:13px }
+input { width:100%; padding:8px; margin-top:4px; box-sizing:border-box }
+ul { list-style:none; padding-left:0 }
