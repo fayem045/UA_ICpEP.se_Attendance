@@ -84,7 +84,6 @@ export default function Login() {
           </div>
         </form>
         {message && <p>{message}</p>}
-        <p style={{ fontSize: 13, marginTop: 12 }}>If you don't have an account, create one in Supabase Auth and add a `profiles` row with `role` set to 'admin' or 'student'.</p>
         </div>
       </section>
     </main>
