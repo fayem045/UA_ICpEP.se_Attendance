@@ -63,6 +63,7 @@ export default function Login() {
           <button className="login-signup-submit" disabled={loading || providerLoading !== ''} type="submit">{loading ? 'Creating account...' : 'Sign Up'}</button>
           <div className="login-divider" aria-hidden="true"><span>or continue with</span></div>
           <div className="login-providers">
+            
             <button
               className="login-provider login-provider-google"
               disabled={loading || providerLoading !== ''}
@@ -70,8 +71,8 @@ export default function Login() {
               type="button"
             >
               <span className="provider-mark">G</span>
-              {providerLoading === 'google' ? 'Connecting...' : 'Continue with Google'}
             </button>
+
             <button
               className="login-provider login-provider-facebook"
               disabled={loading || providerLoading !== ''}
@@ -79,7 +80,6 @@ export default function Login() {
               type="button"
             >
               <span className="provider-mark">f</span>
-              {providerLoading === 'facebook' ? 'Connecting...' : 'Continue with Facebook'}
             </button>
           </div>
         </form>
