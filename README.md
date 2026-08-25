@@ -1,3 +1,20 @@
+# ICpEP Attendance QR
+
+## Supabase Auth setup
+
+Create the administrator in Supabase Dashboard under **Authentication > Users**:
+
+- Email: `AdminSide1@gmail.com`
+- Set a password and confirm the user email.
+
+The app routes that account to the admin dashboard. Student accounts must use an
+email ending in `.student@ua.edu.ph` and are routed to the student QR portal.
+
+For student confirmation emails, open Supabase **Authentication > Providers > Email**
+and ensure **Confirm email** is enabled. Add `http://127.0.0.1:5173/**` and
+`http://localhost:5173/**` under **Authentication > URL Configuration > Redirect URLs**.
+The development SMTP service may limit delivery; configure custom SMTP for reliable
+email delivery.
 # Attendance QR (React + Supabase)
 
 Minimal Vite + React frontend that can generate per-student QR codes and scan them to record attendance into Supabase.

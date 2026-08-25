@@ -1,48 +1,61 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from './lib/supabaseClient'
-import Login from './components/Login'
 import AdminView from './components/AdminView'
+import Login from './components/Login'
 import StudentView from './components/StudentView'
+
+const ADMIN_EMAIL = 'adminside1@gmail.com'
+const STUDENT_EMAIL_PATTERN = /\.student@ua\.edu\.ph$/i
+
+function getRole(email = '') {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  if (normalizedEmail === ADMIN_EMAIL) return 'admin'
+  if (STUDENT_EMAIL_PATTERN.test(normalizedEmail)) return 'student'
+  return null
+}
 
 export default function App() {
   const [session, setSession] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkSession()
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session?.access_token ? session : null)
-      if (session?.user) fetchProfile(session.user.id)
+    let mounted = true
+
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (mounted) {
+        setSession(currentSession)
+        setLoading(false)
+      }
     })
-    return () => sub?.subscription?.unsubscribe?.()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
+      setLoading(false)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
-  async function checkSession() {
-    const {
-      data: { session }
-    } = await supabase.auth.getSession()
-    setSession(session)
-    if (session?.user) fetchProfile(session.user.id)
-  }
-
-  async function fetchProfile(userId) {
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
-    if (error) console.warn('no profile', error)
-    else setProfile(data)
-  }
-
+  if (loading) return <main className="container">Loading...</main>
   if (!session) return <Login />
 
-  // If profile isn't loaded yet, show a simple loading state
-  if (!profile) return <div className="container"><p>Loading profile...</p></div>
+  const profile = session.user
+  const role = getRole(profile.email)
+
+  if (role === 'admin') return <AdminView profile={profile} />
+  if (role === 'student') return <StudentView profile={profile} />
 
   return (
-    <div>
-      {profile.role === 'admin' ? (
-        <AdminView profile={profile} />
-      ) : (
-        <StudentView profile={profile} />
-      )}
-    </div>
+    <main className="container">
+      <div className="card">
+        <h1>Account not authorized</h1>
+        <p>Use the admin account or your university student email to continue.</p>
+        <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+      </div>
+    </main>
   )
 }

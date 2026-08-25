@@ -6,6 +6,8 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [signingUp, setSigningUp] = useState(false)
+  const [resending, setResending] = useState(false)
   const [providerLoading, setProviderLoading] = useState('')
   const [message, setMessage] = useState('')
 
@@ -16,7 +18,38 @@ export default function Login() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) setMessage(error.message)
-    else setMessage('Logged in')
+    else if (!data.user?.email) setMessage('The account has no email address.')
+  }
+
+  async function handleSignUp() {
+    if (!/\.student@ua\.edu\.ph$/i.test(email.trim())) {
+      setMessage('Sign up requires a .student@ua.edu.ph email address.')
+      return
+    }
+
+    setSigningUp(true)
+    setMessage('')
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    })
+    setSigningUp(false)
+    if (error) setMessage(error.message)
+    else if (data.session) setMessage('Account created. You can log in now.')
+    else setMessage('Confirmation email sent. Check your inbox or spam folder, then log in.')
+  }
+
+  async function handleResendConfirmation() {
+    setResending(true)
+    setMessage('')
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: window.location.origin },
+    })
+    setResending(false)
+    setMessage(error ? error.message : 'A new confirmation email was sent.')
   }
 
   async function handleProviderLogin(provider) {
@@ -59,8 +92,8 @@ export default function Login() {
           <input id="login-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@example.com" autoComplete="email" required />
           <label htmlFor="login-password">Password</label>
           <input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Enter your password" autoComplete="current-password" required />
-          <button className="login-submit" disabled={loading || providerLoading !== ''} type="submit">{loading ? 'Logging in...' : 'Log In'}</button>
-          <button className="login-signup-submit" disabled={loading || providerLoading !== ''} type="submit">{loading ? 'Creating account...' : 'Sign Up'}</button>
+          <button className="login-submit" disabled={loading || signingUp || resending || providerLoading !== ''} type="submit">{loading ? 'Logging in...' : 'Log In'}</button>
+          <button className="login-signup-submit" disabled={loading || signingUp || resending || providerLoading !== ''} onClick={handleSignUp} type="button">{signingUp ? 'Creating account...' : 'Sign Up'}</button>
           <div className="login-divider" aria-hidden="true"><span>or continue with</span></div>
           <div className="login-providers">
             
@@ -84,6 +117,9 @@ export default function Login() {
           </div>
         </form>
         {message && <p>{message}</p>}
+        <button className="login-confirmation-resend" disabled={loading || signingUp || resending || providerLoading !== '' || !email.trim()} onClick={handleResendConfirmation} type="button">
+          {resending ? 'Sending...' : 'Resend confirmation email'}
+        </button>
         </div>
       </section>
     </main>
