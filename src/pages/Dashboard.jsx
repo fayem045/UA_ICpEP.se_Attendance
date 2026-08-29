@@ -1,6 +1,7 @@
 import React from 'react'
 import NavBar from '../components/NavBar'
 import StatCard from '../components/StatCard'
+import QRGenerator from '../components/QRGenerator'
 
 export default function Dashboard({ profile }){
   // placeholder sample data
@@ -60,24 +61,31 @@ export default function Dashboard({ profile }){
         </div>
       </div>
 
-      <div className="card" style={{marginTop:16}}>
-        <h3 style={{marginTop:0}}>Recent Attendance Activity</h3>
-        <table className="table" style={{width:'100%'}}>
-          <thead>
-            <tr><th>Member</th><th>Event</th><th>Date</th><th>Time</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            {recent.map((r,i)=> (
-              <tr key={i}>
-                <td>{r.member}</td>
-                <td>{r.event}</td>
-                <td>{r.date}</td>
-                <td>{r.time}</td>
-                <td>{r.status === 'present' ? <span className="badge present">Present</span> : r.status === 'late' ? <span className="badge late">Late</span> : <span className="badge absent">Absent</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ display:'grid', gridTemplateColumns:'1.3fr 0.7fr', gap:16, marginTop:16 }}>
+        <div className="card">
+          <h3 style={{marginTop:0}}>Recent Attendance Activity</h3>
+          <table className="table" style={{width:'100%'}}>
+            <thead>
+              <tr><th>Member</th><th>Event</th><th>Date</th><th>Time</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {recent.map((r,i)=> (
+                <tr key={i}>
+                  <td>{r.member}</td>
+                  <td>{r.event}</td>
+                  <td>{r.date}</td>
+                  <td>{r.time}</td>
+                  <td>{r.status === 'present' ? <span className="badge present">Present</span> : r.status === 'late' ? <span className="badge late">Late</span> : <span className="badge absent">Absent</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="card">
+          <h3 style={{marginTop:0}}>Student QR Generator</h3>
+          <QRGenerator />
+        </div>
       </div>
     </div>
   )
