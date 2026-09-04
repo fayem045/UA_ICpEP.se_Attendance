@@ -17,7 +17,6 @@ export default function StudentView({ profile }) {
             department: profile.department || ''
           })
         })
-
         const data = await response.json()
         if (response.ok) setQrToken(data.qrToken)
         else console.error('QR generation failed', data)
