@@ -19,9 +19,10 @@ export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboa
       <nav className="nav-links">
         <a className={activePage === 'dashboard' ? 'active' : ''} href="#dashboard" onClick={(event) => navigate(event, 'dashboard')}>Dashboard</a>
         <a className={activePage === 'attendance' ? 'active' : ''} href="#attendance" onClick={(event) => navigate(event, 'attendance')}>Attendance</a>
-        <a href="#events">Events</a>
-        <a href="#members">Members</a>
-        <a href="#reports">Reports</a>
+        {/* to activate the buttons intoclickable */}
+        <a className={activePage === 'events' ? 'active' : ''} href="#events" onClick={(event) => navigate(event, 'events')}>Events</a>
+        <a className={activePage === 'members' ? 'active' : ''} href="#members" onClick={(event) => navigate (event, 'members')}>Members</a>
+        <a className={activePage === 'reports' ? 'active' : ''} href="#reports" onClick={(event) => navigate(event, 'reports')}>Reports</a>
       </nav>
 
       <div className="spacer" />
