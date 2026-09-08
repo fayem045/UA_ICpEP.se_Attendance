@@ -3,7 +3,7 @@ import NavBar from '../components/NavBar'
 import StatCard from '../components/StatCard'
 import QRGenerator from '../components/QRGenerator'
 
-export default function Dashboard({ profile }){
+export default function Dashboard({ profile, onNavigate }){
   // placeholder sample data
   const stats = [
     { icon:'👥', value: 128, label: 'Total Members', trend: '+4%' },
@@ -20,7 +20,7 @@ export default function Dashboard({ profile }){
 
   return (
     <div className="app-shell container">
-      <NavBar chapter="ICpEP.UA Chapter" />
+      <NavBar chapter="ICpEP.UA Chapter" activePage="dashboard" onNavigate={onNavigate} />
 
       <div className="dashboard-header">
         <div className="header-left">
@@ -38,7 +38,7 @@ export default function Dashboard({ profile }){
         {stats.map((s, i) => <StatCard key={i} {...s} />)}
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'2fr 1fr', gap:14, marginTop:16}}>
+      <div className="dashboard-content-grid dashboard-content-grid--analytics">
         <div className="card">
           <h3 style={{marginTop:0}}>Attendance Analytics</h3>
           <div style={{height:260,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-secondary)'}}>Chart placeholder (line/bar charts with cyan accents)</div>
@@ -61,25 +61,27 @@ export default function Dashboard({ profile }){
         </div>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1.3fr 0.7fr', gap:16, marginTop:16 }}>
+      <div className="dashboard-content-grid dashboard-content-grid--activity">
         <div className="card">
           <h3 style={{marginTop:0}}>Recent Attendance Activity</h3>
-          <table className="table" style={{width:'100%'}}>
-            <thead>
-              <tr><th>Member</th><th>Event</th><th>Date</th><th>Time</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              {recent.map((r,i)=> (
-                <tr key={i}>
-                  <td>{r.member}</td>
-                  <td>{r.event}</td>
-                  <td>{r.date}</td>
-                  <td>{r.time}</td>
-                  <td>{r.status === 'present' ? <span className="badge present">Present</span> : r.status === 'late' ? <span className="badge late">Late</span> : <span className="badge absent">Absent</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr><th>Member</th><th>Event</th><th>Date</th><th>Time</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                {recent.map((r,i)=> (
+                  <tr key={i}>
+                    <td>{r.member}</td>
+                    <td>{r.event}</td>
+                    <td>{r.date}</td>
+                    <td>{r.time}</td>
+                    <td>{r.status === 'present' ? <span className="badge present">Present</span> : r.status === 'late' ? <span className="badge late">Late</span> : <span className="badge absent">Absent</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="card">
