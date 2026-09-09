@@ -42,7 +42,7 @@ body::before{
 /* Top navigation */
 .top-nav{display:flex;align-items:center;gap:18px;padding:12px 18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(22,77,112,0.8);border-radius:12px;box-shadow:0 4px 30px rgba(13,41,66,0.3);}
 .brand{display:flex;align-items:center;gap:12px}
-.brand img{height:36px}
+.brand-logo{display:block;width:44px;height:44px;flex:0 0 44px;object-fit:contain;border-radius:50%;background:#fff}
 .brand .title{font-weight:700;color:var(--ice-white);letter-spacing:0.6px}
 .nav-links{display:flex;gap:10px;margin-left:20px}
 .nav-links a{color:var(--text-secondary);text-decoration:none;padding:8px 12px;border-radius:8px;font-size:14px}

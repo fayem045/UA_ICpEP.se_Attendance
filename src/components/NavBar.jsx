@@ -1,4 +1,5 @@
 import React from 'react'
+import logo from '../image/icpep-logo.png'
 
 export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboard', onNavigate }){
   const navigate = (event, page) => {
@@ -9,7 +10,7 @@ export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboa
   return (
     <div className="top-nav">
       <div className="brand">
-        <img src="/assets/icpep-logo.png" alt="ICpEP logo" />
+        <img className="brand-logo" src={logo} alt="ICpEP logo" />
         <div>
           <div className="title">{chapter}</div>
           <div style={{fontSize:12,color:'var(--text-secondary)'}}>Computer Engineering Chapter</div>
