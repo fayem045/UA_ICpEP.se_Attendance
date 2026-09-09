@@ -10,7 +10,7 @@ export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboa
   return (
     <div className="top-nav">
       <div className="brand">
-        <img className="brand-logo" src={logo} alt="ICpEP logo" />
+        <img className={activePage === 'dashboard' ? 'active' : ''} href="#dashboard" onClick={(event) => navigate(event, 'dashboard')} id ="brand-logo" src={logo} alt="ICpEP logo" />
         <div>
           <div className="title">{chapter}</div>
           <div style={{fontSize:12,color:'var(--text-secondary)'}}>Computer Engineering Chapter</div>
