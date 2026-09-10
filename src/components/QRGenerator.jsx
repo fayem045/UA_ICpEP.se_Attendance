@@ -18,7 +18,7 @@ export default function QRGenerator() {
         .from('students')
         .select('id, name, department')
 
-      if (!error) setSavedMembers(data || [])
+      if (!error) setSavedMembers((data || []).map((member) => ({ ...member, role: 'student' })))
     }
 
     loadMembers()
@@ -48,8 +48,9 @@ export default function QRGenerator() {
       name: name.trim(),
       department: department.trim()
     }
+    const table = role === 'faculty' ? 'faculty' : 'students'
     const { data, error } = await supabase
-      .from('students')
+      .from(table)
       .upsert(member)
       .select('id, name, department')
       .single()
@@ -60,7 +61,7 @@ export default function QRGenerator() {
       return
     }
 
-    setSavedMembers((current) => [data, ...current.filter((item) => item.id !== data.id)])
+    setSavedMembers((current) => [{ ...data, role }, ...current.filter((item) => item.id !== data.id)])
     setMessage('Member saved successfully.')
   }
 
@@ -76,9 +77,6 @@ export default function QRGenerator() {
           }}>
             <option value="student">Student</option>
             <option value="faculty">Faculty</option>
-            <option value="staff">Staff</option>
-            <option value="guest">Guest</option>
-            <option value="volunteer">Volunteer</option>
           </select>
         </div>
 
@@ -128,7 +126,7 @@ export default function QRGenerator() {
           <div className="qr-saved-member" key={member.id}>
             <strong>{member.name}</strong>
             <span>{member.id}</span>
-            <small>{member.department || 'No department'}</small>
+            <small>{member.role || 'Student'} · {member.department || 'No department'}</small>
           </div>
         ))}
       </div>

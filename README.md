@@ -31,6 +31,12 @@ create table students (
   department text
 );
 
+create table faculty (
+  id text primary key,
+  name text not null,
+  department text
+);
+
 create table attendances (
   id bigserial primary key,
   student_id text references students(id),
@@ -47,6 +53,31 @@ create table profiles (
   full_name text,
   department text
 );
+```
+
+Allow signed-in admins to read and save members when Row Level Security is enabled:
+
+```sql
+alter table students enable row level security;
+alter table faculty enable row level security;
+
+create policy "authenticated users can read students"
+  on students for select to authenticated using (true);
+
+create policy "authenticated users can add students"
+  on students for insert to authenticated with check (true);
+
+create policy "authenticated users can update students"
+  on students for update to authenticated using (true) with check (true);
+
+create policy "authenticated users can read faculty"
+  on faculty for select to authenticated using (true);
+
+create policy "authenticated users can add faculty"
+  on faculty for insert to authenticated with check (true);
+
+create policy "authenticated users can update faculty"
+  on faculty for update to authenticated using (true) with check (true);
 ```
 
 3. Install and run locally:
