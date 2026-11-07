@@ -1,5 +1,29 @@
 # ICpEP Attendance QR
 
+## Technologies and features
+
+### Frontend: React.js
+
+- `src/App.jsx` checks the Supabase session and routes signed-in users to the admin or student portal based on their email.
+- `src/components/Login.jsx` provides email/password login, student sign-up, confirmation-email resend, and Google/Facebook sign-in.
+- `src/components/AdminView.jsx` switches between the admin pages. `src/pages/Dashboard.jsx` displays the dashboard, member QR generator, and sample attendance and event information.
+- `src/components/QRGenerator.jsx` lets admins enter member details, save them to Supabase, and preview the generated QR code.
+- `src/components/StudentView.jsx` requests and displays a QR token for the signed-in student.
+- `src/components/QRScanner.jsx` scans QR codes and records attendance.
+- `src/pages/Members.jsx` loads and displays student and faculty records. The Attendance and Events pages are basic views; Reports is still under development.
+- Vite runs the frontend development server and builds the React app.
+
+### Backend: Node.js and Express.js
+
+- `server.js` runs the API on Node.js using Express.
+- `POST /api/student/qr` creates a signed, expiring QR token; `POST /api/attendance/scan` validates a token; and `GET /api/health` checks that the backend is running.
+- The student portal requests a QR token from the backend, and the scanner sends token-based scans for verification.
+
+### Database and authentication: Supabase
+
+- Supabase Auth manages account sign-in and sign-up. The app uses the current session to show the appropriate portal.
+- Supabase provides the PostgreSQL database for member and attendance records. The app reads and writes tables such as `students`, `faculty`, and `attendances`.
+
 ## Supabase Auth setup
 
 Create the administrator in Supabase Dashboard under **Authentication > Users**:
@@ -41,7 +65,10 @@ create table attendances (
   id bigserial primary key,
   student_id text references students(id),
   department text,
-  scanned_at timestamptz default now()
+  scanned_at timestamptz default now(),
+  event_name text not null default 'General Assembly',
+  status text not null default 'Present'
+    check (status in ('Present', 'Late', 'Absent'))
 );
 
 -- Create profiles table to map auth users to roles
@@ -53,6 +80,32 @@ create table profiles (
   full_name text,
   department text
 );
+```
+
+For an existing `attendances` table, add the fields used by the Attendance page:
+
+```sql
+alter table attendances
+  add column if not exists event_name text not null default 'General Assembly',
+  add column if not exists status text not null default 'Present';
+```
+
+Allow authenticated users to view and manage attendance records when Row Level Security is enabled:
+
+```sql
+alter table attendances enable row level security;
+
+create policy "authenticated users can read attendance"
+  on attendances for select to authenticated using (true);
+
+create policy "authenticated users can add attendance"
+  on attendances for insert to authenticated with check (true);
+
+create policy "authenticated users can update attendance"
+  on attendances for update to authenticated using (true) with check (true);
+
+create policy "authenticated users can delete attendance"
+  on attendances for delete to authenticated using (true);
 ```
 
 Allow signed-in admins to read and save members when Row Level Security is enabled:
