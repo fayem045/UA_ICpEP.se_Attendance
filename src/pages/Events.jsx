@@ -3,9 +3,9 @@ import NavBar from '../components/NavBar'
 
 export default function Events ({ profile, onNavigate }){
     return(
-        <div>
+        <div className="app-shell container">
             <NavBar activePage="events" onNavigate={onNavigate} />
-            <h2>Events</h2>
+            <h1>Events</h1>
         </div>
     )
 }

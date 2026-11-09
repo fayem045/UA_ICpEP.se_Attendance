@@ -28,9 +28,9 @@ export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboa
 
       <div className="spacer" />
 
-      <div style={{display:'flex',alignItems:'center'}}>
-        <button className="icon-btn">🔔</button>
-        <button className="icon-btn" style={{marginLeft:8}}>👤</button>
+      <div className="icon-buttons" style={{display:'flex',alignItems:'center',}}>
+        <button className="icon-btn"><img src="src\image\bell.png" alt="" /></button>
+        <button className="icon-btn" style={{marginLeft:8}}><img src="src\image\user.png" alt="" /></button>
       </div>
     </div>
   )
