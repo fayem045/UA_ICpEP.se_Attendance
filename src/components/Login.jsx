@@ -10,15 +10,32 @@ export default function Login() {
   const [resending, setResending] = useState(false)
   const [providerLoading, setProviderLoading] = useState('')
   const [message, setMessage] = useState('')
+  const [messageIsError, setMessageIsError] = useState(false)
+  const thirdPartyAvailable = false
 
   async function handleLogin(e) {
     e.preventDefault()
     setLoading(true)
     setMessage('')
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) setMessage(error.message)
-    else if (!data.user?.email) setMessage('The account has no email address.')
+    setMessageIsError(false)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      if (error) {
+        const message = error.message.toLowerCase().includes('invalid login credentials')
+          ? 'Invalid email or password. Students need to sign up first and confirm their email.'
+          : error.message
+        setMessage(message)
+        setMessageIsError(true)
+      } else if (!data.user?.email) {
+        setMessage('The account has no email address.')
+        setMessageIsError(true)
+      }
+    } catch {
+      setMessage('Could not reach Supabase. Check your connection and try again.')
+      setMessageIsError(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSignUp() {
@@ -29,27 +46,44 @@ export default function Login() {
 
     setSigningUp(true)
     setMessage('')
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    })
-    setSigningUp(false)
-    if (error) setMessage(error.message)
-    else if (data.session) setMessage('Account created. You can log in now.')
-    else setMessage('Confirmation email sent. Check your inbox or spam folder, then log in.')
+    setMessageIsError(false)
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: window.location.origin }
+      })
+      if (error) {
+        setMessage(error.message)
+        setMessageIsError(true)
+      } else if (data.session) setMessage('Account created. You can log in now.')
+      else setMessage('Confirmation email sent. Check your inbox or spam folder, then log in.')
+    } catch {
+      setMessage('Could not reach Supabase. Check your connection and try again.')
+      setMessageIsError(true)
+    } finally {
+      setSigningUp(false)
+    }
   }
 
   async function handleResendConfirmation() {
     setResending(true)
     setMessage('')
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin },
-    })
-    setResending(false)
-    setMessage(error ? error.message : 'A new confirmation email was sent.')
+    setMessageIsError(false)
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin }
+      })
+      setMessage(error ? error.message : 'A new confirmation email was sent.')
+      setMessageIsError(Boolean(error))
+    } catch {
+      setMessage('Could not reach Supabase. Check your connection and try again.')
+      setMessageIsError(true)
+    } finally {
+      setResending(false)
+    }
   }
 
   async function handleProviderLogin(provider) {
@@ -99,7 +133,9 @@ export default function Login() {
             
             <button
               className="login-provider login-provider-google"
-              disabled={loading || providerLoading !== ''}
+              disabled={!thirdPartyAvailable || loading || providerLoading !== ''}
+              title="Google sign-in will be enabled after provider setup."
+              aria-label="Google sign-in (not configured yet)"
               onClick={() => handleProviderLogin('google')}
               type="button"
             >
@@ -108,7 +144,9 @@ export default function Login() {
 
             <button
               className="login-provider login-provider-facebook"
-              disabled={loading || providerLoading !== ''}
+              disabled={!thirdPartyAvailable || loading || providerLoading !== ''}
+              title="Facebook sign-in will be enabled after provider setup."
+              aria-label="Facebook sign-in (not configured yet)"
               onClick={() => handleProviderLogin('facebook')}
               type="button"
             >
@@ -116,7 +154,8 @@ export default function Login() {
             </button>
           </div>
         </form>
-        {message && <p>{message}</p>}
+        {message && <p className={messageIsError ? 'login-message error' : 'login-message'} role={messageIsError ? 'alert' : 'status'}>{message}</p>}
+        {!thirdPartyAvailable && <p className="login-provider-note">Google and Facebook sign-in are not configured yet.</p>}
         <button className="login-confirmation-resend" disabled={loading || signingUp || resending || providerLoading !== '' || !email.trim()} onClick={handleResendConfirmation} type="button">
           {resending ? 'Sending...' : 'Resend confirmation email'}
         </button>

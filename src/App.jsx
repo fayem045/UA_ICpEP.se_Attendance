@@ -4,13 +4,16 @@ import AdminView from './components/AdminView'
 import Login from './components/Login'
 import StudentView from './components/StudentView'
 
-const ADMIN_EMAIL = 'adminside1@gmail.com'
+const ADMIN_EMAILS = new Set([
+  'adminside1@gmail.com',
+  ...(import.meta.env.VITE_ADMIN_EMAILS || '').split(',')
+].map((email) => email.trim().toLowerCase()).filter(Boolean))
 const STUDENT_EMAIL_PATTERN = /\.student@ua\.edu\.ph$/i
 
 function getRole(email = '') {
   const normalizedEmail = email.trim().toLowerCase()
 
-  if (normalizedEmail === ADMIN_EMAIL) return 'admin'
+  if (ADMIN_EMAILS.has(normalizedEmail)) return 'admin'
   if (STUDENT_EMAIL_PATTERN.test(normalizedEmail)) return 'student'
   return null
 }
