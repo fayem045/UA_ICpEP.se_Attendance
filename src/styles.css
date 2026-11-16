@@ -52,6 +52,23 @@ body::before{
 .spacer{flex:1}
 .icon-btn{background:transparent;border:1px solid rgba(0,217,255,.12);padding:8px;border-radius:10px;color:var(--ice-white);margin-left:8px;cursor:pointer;transition:all 180ms ease}
 .icon-btn:hover{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-color:var(--electric-cyan);box-shadow:0 0 20px rgba(0,217,255,0.08)}
+.icon-btn img{display:block;width:20px;height:20px;object-fit:contain}
+.user-profile{position:relative}
+.user-profile-trigger{display:grid;place-items:center}
+.user-profile-menu{position:absolute;z-index:10;top:calc(100% + 10px);right:0;width:min(320px,calc(100vw - 32px));padding:16px;background:var(--bg-secondary);border:1px solid var(--border-blue);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.user-profile-heading{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.user-profile-avatar{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:50%;background:rgba(0,217,255,.12);color:var(--electric-cyan);font-weight:700}
+.user-profile-identity{display:flex;flex-direction:column;gap:4px;min-width:0}
+.user-profile-identity strong,.user-profile-identity span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-profile-identity span{color:var(--text-secondary);font-size:12px}
+.user-profile-details{display:grid;gap:12px;margin:14px 0}
+.user-profile-details div{display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.user-profile-details dt{color:var(--text-secondary)}
+.user-profile-details dd{margin:0;text-align:right}
+.user-profile-signout{width:100%;padding:9px 12px;border:1px solid rgba(255,79,109,.45);border-radius:8px;background:rgba(255,79,109,.08);color:var(--ice-white);font:inherit;cursor:pointer}
+.user-profile-signout:hover:not(:disabled){background:rgba(255,79,109,.16);border-color:var(--danger)}
+.user-profile-signout:disabled{cursor:wait;opacity:.65}
+.user-profile-error{margin:0 0 12px;color:var(--danger);font-size:12px}
 
 
 /* Header */

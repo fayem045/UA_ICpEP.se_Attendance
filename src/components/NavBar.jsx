@@ -1,7 +1,9 @@
 import React from 'react'
 import logo from '../image/icpep-logo.png'
+import bellIcon from '../image/bell.png'
+import UserProfile from './UserProfile'
 
-export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboard', onNavigate }){
+export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboard', onNavigate, profile }){
   const navigate = (event, page) => {
     event.preventDefault()
     onNavigate?.(page)
@@ -29,8 +31,8 @@ export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboa
       <div className="spacer" />
 
       <div className="icon-buttons" style={{display:'flex',alignItems:'center',}}>
-        <button className="icon-btn"><img src="src\image\bell.png" alt="" /></button>
-        <button className="icon-btn" style={{marginLeft:8}}><img src="src\image\user.png" alt="" /></button>
+        <button className="icon-btn" type="button" aria-label="Notifications"><img src={bellIcon} alt="" /></button>
+        <UserProfile profile={profile} />
       </div>
     </div>
   )

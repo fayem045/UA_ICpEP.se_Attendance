@@ -20,7 +20,7 @@ export default function Dashboard({ profile, onNavigate }){
 
   return (
     <div className="app-shell container">
-      <NavBar chapter="ICpEP.UA Chapter" activePage="dashboard" onNavigate={onNavigate} />
+      <NavBar chapter="ICpEP.UA Chapter" activePage="dashboard" onNavigate={onNavigate} profile={profile} />
 
       <div className="dashboard-header">
         <div className="header-left">

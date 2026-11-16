@@ -117,7 +117,7 @@ export default function Attendance({ profile, onNavigate }) {
 
   return (
     <div className="app-shell container">
-      <NavBar activePage="attendance" onNavigate={onNavigate} />
+      <NavBar activePage="attendance" onNavigate={onNavigate} profile={profile} />
 
       <div className="dashboard-header">
         <div className="header-left">

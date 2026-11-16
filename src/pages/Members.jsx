@@ -33,7 +33,7 @@ export default function Members ({profile, onNavigate}){
 
     return(
         <div className="app-shell container">
-            <Navbar activePage="members" onNavigate={onNavigate} />
+            <Navbar activePage="members" onNavigate={onNavigate} profile={profile} />
 
             <div className="dashboard-header">
                 <div className="header-left">
@@ -78,4 +78,3 @@ export default function Members ({profile, onNavigate}){
         </div>
     )
 }
-
