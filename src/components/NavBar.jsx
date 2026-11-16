@@ -31,7 +31,9 @@ export default function NavBar({ chapter='ICpEP.UA Chapter', activePage='dashboa
       <div className="spacer" />
 
       <div className="icon-buttons" style={{display:'flex',alignItems:'center',}}>
-        <button className="icon-btn" type="button" aria-label="Notifications"><img src={bellIcon} alt="" /></button>
+        <button className="icon-btn" type="button" aria-label="Notifications">
+          <img src={bellIcon} alt="" />
+        </button>
         <UserProfile profile={profile} />
       </div>
     </div>

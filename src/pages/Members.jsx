@@ -1,35 +1,44 @@
-import React, { useEffect, useState } from 'react'
-import Navbar from '../components/NavBar'
+import React, { useEffect, useMemo, useState } from 'react'
+import NavBar from '../components/NavBar'
 import { supabase } from '../lib/supabaseClient'
 
-export default function Members ({profile, onNavigate}){
-    const [members, setMembers] = useState([])
-    // first step in setfaculty
-    const [faculty, setFaculty] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [errorMessage, setErrorMessage] = useState('')
+export default function Members({ profile, onNavigate }) {
+  const [members, setMembers] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
 
-    useEffect(() => {
-        async function loadPeople() {
-            const [studentsResult, facultyResult] = await Promise.all([
-                supabase.from('students').select('id, name, department, label').order('name'),
-                // 2nd faculty
-                supabase.from('faculty').select('id, name, department,label').order('name')
-            ])
+  async function loadPeople() {
+    setIsLoading(true)
+    setErrorMessage('')
+    const [studentsResult, facultyResult] = await Promise.all([
+      supabase.from('students').select('id, name, department').order('name'),
+      supabase.from('faculty').select('id, name, department').order('name')
+    ])
 
-            if (studentsResult.error || facultyResult.error) {
-                setErrorMessage(studentsResult.error?.message || facultyResult.error.message)
-            } else {
-                setMembers(studentsResult.data || [])
-                // third step in setfaculty
-                setFaculty(facultyResult.data || [])
-            }
+    if (studentsResult.error || facultyResult.error) {
+      setErrorMessage(studentsResult.error?.message || facultyResult.error.message)
+    } else {
+      setMembers([
+        ...(studentsResult.data || []).map((member) => ({ ...member, type: 'Student' })),
+        ...(facultyResult.data || []).map((member) => ({ ...member, type: 'Faculty' }))
+      ].sort((left, right) => (left.name || '').localeCompare(right.name || '')))
+    }
+    setIsLoading(false)
+  }
 
-            setIsLoading(false)
-        }
+  useEffect(() => { loadPeople() }, [])
 
-        loadPeople()
-    }, [])
+  const visibleMembers = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return members.filter((member) => {
+      const matchesType = typeFilter === 'all' || member.type.toLowerCase() === typeFilter
+      const matchesQuery = !query || [member.id, member.name, member.department, member.type]
+        .some((value) => String(value || '').toLowerCase().includes(query))
+      return matchesType && matchesQuery
+    })
+  }, [members, search, typeFilter])
 
     return(
         <div className="app-shell container">
@@ -77,4 +86,4 @@ export default function Members ({profile, onNavigate}){
             </div>
         </div>
     )
-}
+  }

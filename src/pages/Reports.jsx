@@ -1,5 +1,6 @@
-import react from 'react'
-import Navbar from '../components/NavBar'
+import React, { useEffect, useMemo, useState } from 'react'
+import NavBar from '../components/NavBar'
+import { supabase } from '../lib/supabaseClient'
 
 export default function Reports ({profile, onNavigate}){
     return(
