@@ -55,9 +55,29 @@ export default function NavBar({ chapter = 'ICpEP.UA Chapter', activePage = 'das
       </nav>
 
       <div className="spacer" />
-      <div style={{display:'flex',alignItems:'center'}}>
-        <button className="icon-btn">🔔</button>
-        <button className="icon-btn" style={{marginLeft:8}}>👤</button>
+      <div className="nav-account">
+        <button className="icon-btn" type="button" title="Open events" aria-label="Open events" onClick={() => onNavigate?.('events')}>
+          <img src={bellIcon} alt="" />
+        </button>
+        <button
+          className="icon-btn"
+          type="button"
+          title="Account menu"
+          aria-label="Account menu"
+          aria-expanded={accountOpen}
+          onClick={() => setAccountOpen((open) => !open)}
+        >
+          <img src={userIcon} alt="" />
+        </button>
+        {accountOpen && (
+          <div className="account-menu">
+            <span className="muted-text">Signed in as</span>
+            <strong>{profile?.email || 'Admin'}</strong>
+            <button className="neon-button" type="button" onClick={signOut} disabled={isSigningOut}>
+              {isSigningOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </div>
+        )}
       </div>
     </header>
   )

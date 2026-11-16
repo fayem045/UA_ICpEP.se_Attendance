@@ -5,6 +5,7 @@ import './login.css'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [signingUp, setSigningUp] = useState(false)
   const [resending, setResending] = useState(false)
@@ -56,8 +57,8 @@ export default function Login() {
       if (error) {
         setMessage(error.message)
         setMessageIsError(true)
-      } else if (data.session) setMessage('Account created. You can log in now.')
-      else setMessage('Confirmation email sent. Check your inbox or spam folder, then log in.')
+      } else if (data.session) setMessage('Account created. You can sign in now.')
+      else setMessage('Confirmation email sent. Check your inbox or spam folder, then sign in.')
     } catch {
       setMessage('Could not reach Supabase. Check your connection and try again.')
       setMessageIsError(true)
@@ -106,12 +107,12 @@ export default function Login() {
     <section className="login-hero" aria-hidden="true">
       <div className="login__hero-text">
           <h2 className="login__hero-title">
-            LOGIN TO BE ONE.
+            SIGN IN TO BE ONE.
          <br />
              Secure Your Spot!
           </h2>
           <p className="login__hero-sub">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            Where the INNOVATORS of tomorrow meet today. Sign in to access your account and stay connected with the latest updates, resources, and opportunities.
         </p>
     </div>
     </section>
@@ -120,14 +121,28 @@ export default function Login() {
         <div className="card login-card">
         <p className="login-kicker">SECURE ATTENDANCE PORTAL</p>
         <h2>Welcome back</h2>
-        <p className="login-intro">Log in with your existing account to continue.</p>
+        <p className="login-intro">Sign in with your existing account to continue.</p>
         <form onSubmit={handleLogin}>
           <label htmlFor="login-email">Email address</label>
           <input id="login-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@example.com" autoComplete="email" required />
           <label htmlFor="login-password">Password</label>
-          <input id="login-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Enter your password" autoComplete="current-password" required />
-          <button className="login-submit" disabled={loading || signingUp || resending || providerLoading !== ''} type="submit">{loading ? 'Logging in...' : 'Log In'}</button>
-          <button className="login-signup-submit" disabled={loading || signingUp || resending || providerLoading !== ''} onClick={handleSignUp} type="button">{signingUp ? 'Creating account...' : 'Sign Up'}</button>
+          <div className="login-password-field">
+            <input id="login-password" className="login-password-input" value={password} onChange={(e) => setPassword(e.target.value)} type={showPassword ? 'text' : 'password'} placeholder="Enter your password" autoComplete="current-password" required />
+            <button className="login-password-toggle" type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)}>
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M2.1 12s3.6-7 9.9-7 9.9 7 9.9 7-3.6 7-9.9 7-9.9-7-9.9-7Z" />
+                <circle cx="12" cy="12" r="3" />
+                {showPassword && <path d="m3 3 18 18" />}
+              </svg>
+            </button>
+          </div>
+          <button className="login-submit" disabled={loading || signingUp || resending || providerLoading !== ''} type="submit">{loading ? 'Signing in...' : 'Sign In'}</button>
+          <div className="login-signup-row">
+            <span>Don't have an account?</span>
+            <button className="login-signup-submit" disabled={loading || signingUp || resending || providerLoading !== ''} onClick={handleSignUp} type="button">
+              {signingUp ? 'Creating account...' : 'Create account'}
+            </button>
+          </div>
           <div className="login-divider" aria-hidden="true"><span>or continue with</span></div>
           <div className="login-providers">
             

@@ -80,6 +80,44 @@
 	color: rgba(231, 247, 255, 0.42);
 }
 
+.login-password-field {
+	position: relative;
+}
+
+.login-card .login-password-input {
+	padding-right: 44px;
+}
+
+.login-password-toggle {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	transform: translateY(-50%);
+	color: var(--ice-white);
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+}
+
+.login-password-toggle svg {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.8;
+}
+
+.login-password-toggle:focus-visible {
+	outline: 2px solid var(--electric-cyan);
+	outline-offset: 2px;
+}
+
 .login-submit {
 	margin-top: 12px;
 	padding: 12px;
@@ -92,12 +130,20 @@
 	cursor: pointer;
 }
 
+.login-signup-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	color: var(--ice-white);
+	font-size: 13px;
+}
+
 .login-signup-submit {
-   margin-top: 12px;
-	padding: 12px;
+	padding: 2px 4px;
 	color: var(--electric-cyan);
-	background: var(--dark-blue);
-	border: 2px solid var(--electric-cyan);
+	background: transparent;
+	border: 0;
 	border-radius: 8px;
 	font: inherit;
 	font-weight: 700;
@@ -182,6 +228,28 @@
 .login-provider-facebook .provider-mark {
 	font-family: Arial, sans-serif;
 	font-size: 24px;
+}
+
+.login-provider-note {
+	text-align: center;
+}
+
+.login-confirmation-resend {
+	display: block;
+	margin: 12px auto 0;
+	padding: 0;
+	color: var(--electric-cyan);
+	background: transparent;
+	border: 0;
+	font: inherit;
+	font-size: 12px;
+	text-align: center;
+	cursor: pointer;
+}
+
+.login-confirmation-resend:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
 }
 
 .login-hero {
