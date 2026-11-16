@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import NavBar from '../components/NavBar'
 import { supabase } from '../lib/supabaseClient'
 
+<<<<<<< HEAD
 const STATUSES = ['Present', 'Late', 'Absent']
 const PAGE_SIZE = 1000
 const MAX_REPORT_ROWS = 10000
@@ -9,6 +10,19 @@ const MAX_REPORT_ROWS = 10000
 function dateInputValue(date) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
   return local.toISOString().slice(0, 10)
+=======
+export default function Reports ({profile, onNavigate}){
+    return(
+        // start to create whatever bet content of page
+        <div>
+            {/*start turn on the navbar */}
+            <Navbar activePage="reports" onNavigate={onNavigate} />
+            {/* end turn on */}
+            <h2>Report Section is  Still under Development</h2>
+        </div>
+        // end of content
+    )
+>>>>>>> parent of c9f663b (NavbarHover)
 }
 
 function csvCell(value) {

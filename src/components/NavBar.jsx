@@ -55,6 +55,7 @@ export default function NavBar({ chapter = 'ICpEP.UA Chapter', activePage = 'das
       </nav>
 
       <div className="spacer" />
+<<<<<<< HEAD
       <div className="nav-account">
         <button className="icon-btn" type="button" title="Open events" aria-label="Open events" onClick={() => onNavigate?.('events')}>
           <img src={bellIcon} alt="" />
@@ -78,6 +79,12 @@ export default function NavBar({ chapter = 'ICpEP.UA Chapter', activePage = 'das
             </button>
           </div>
         )}
+=======
+
+      <div style={{display:'flex',alignItems:'center'}}>
+        <button className="icon-btn">🔔</button>
+        <button className="icon-btn" style={{marginLeft:8}}>👤</button>
+>>>>>>> parent of c9f663b (NavbarHover)
       </div>
     </header>
   )

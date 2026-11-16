@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import NavBar from '../components/NavBar'
 import { supabase } from '../lib/supabaseClient'
 
+<<<<<<< HEAD
 const emptyForm = { name: '', description: '', location: '', startsAt: '', endsAt: '' }
 
 function toInputDate(value) {
@@ -133,6 +134,13 @@ export default function Events({ profile, onNavigate }) {
         <div className="header-left">
           <h1>Events</h1>
           <p>Create and manage chapter events and their attendance sessions.</p>
+=======
+export default function Events ({ profile, onNavigate }){
+    return(
+        <div>
+            <NavBar activePage="events" onNavigate={onNavigate} />
+            <h2>Events</h2>
+>>>>>>> parent of c9f663b (NavbarHover)
         </div>
         <button className="neon-button" type="button" onClick={loadEvents} disabled={isLoading}>
           {isLoading ? 'Refreshing…' : 'Refresh'}
