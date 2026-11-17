@@ -1,6 +1,6 @@
 # ICpEP Attendance QR
 
-Attendance management app for the ICpEP.UA Chapter. Admins can manage members and events, record attendance by scanner or manually, and export reports. Students can sign in with a university account, complete their profile, and display a time-limited attendance QR.
+Attendance management app for the ICpEP.UA Chapter. Admins can manage members and events, record attendance by scanner or manually, and export reports. Students can sign in with a university account, complete their profile, view chapter events, and display a permanent attendance QR.
 
 ## Features
 
@@ -10,7 +10,7 @@ Attendance management app for the ICpEP.UA Chapter. Admins can manage members an
 - Event create, edit, and delete flows.
 - Event-based QR scanning, manual attendance status updates, duplicate protection, and refreshable roster.
 - Attendance reports with date/event filters, status and department summaries, and CSV export.
-- Student profile completion and signed QR codes that expire after 12 hours.
+- Student dashboard with a chapter event schedule and signed, non-expiring attendance QR.
 - Google and Facebook sign-in are intentionally deferred until provider credentials are configured in Supabase.
 
 ## Run locally
@@ -27,7 +27,7 @@ The frontend defaults to `http://localhost:4000` for the backend API. Change `VI
 
 ## Supabase setup
 
-Use the configured project database with tables for `students`, `faculty`, `attendances`, `profiles`, and `events`. The app's policies should restrict roster, event, and attendance management to admins. Student users can read and update only their own student profile. Do not replace these policies with broad `using (true)` policies.
+Use the configured project database with tables for `students`, `faculty`, `attendances`, `profiles`, and `events`. Apply the SQL migration in `supabase/migrations` so authenticated students can read the event schedule; keep event creation, updates, and deletion restricted to admins. The app's policies should restrict roster and attendance management to admins. Student users can read and update only their own student profile. Do not replace existing management or profile policies with broad `using (true)` policies.
 
 Create admin users in Supabase Authentication and assign their profile role as `admin`. Add their email to `VITE_ADMIN_EMAILS` when it is not the built-in admin email. Student accounts must use an address ending in `.student@ua.edu.ph`; the app creates a student profile when the account is registered.
 
@@ -35,4 +35,4 @@ In Supabase Auth, enable email confirmation and add the local frontend URLs to t
 
 ## QR scanning
 
-Camera scanning needs browser camera permission and works on `localhost` or an HTTPS site. Student QR tokens are signed by the backend, expire after 12 hours, and can be scanned into an event. Admin-generated roster QRs are static JSON codes for in-person roster use.
+Camera scanning needs browser camera permission and works on `localhost` or an HTTPS site. Student QR tokens are signed by the backend, do not expire, and can be scanned into an event. Admin-generated roster QRs are static JSON codes for in-person roster use.

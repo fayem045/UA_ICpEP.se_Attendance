@@ -59,8 +59,8 @@ app.post('/api/student/qr', async (req, res) => {
       department: profile.department || '',
       userId: user.id,
       type: 'attendance-qr'
-    }, jwtSecret, { expiresIn: '12h', issuer: 'attendance-qr' })
-    return res.json({ qrToken: token, expiresIn: 43200 })
+    }, jwtSecret, { issuer: 'attendance-qr', noTimestamp: true })
+    return res.json({ qrToken: token })
   } catch (error) {
     console.error('QR token issue failed:', error.message)
     return res.status(503).json({ message: 'QR service could not verify your account. Try again shortly.' })

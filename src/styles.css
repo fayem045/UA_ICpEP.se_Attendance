@@ -208,6 +208,14 @@ body::before{
 .student-header p{margin:6px 0 0}
 .student-profile-card,.student-qr-card{max-width:720px;margin:30px auto;padding:clamp(18px,4vw,30px)}
 .student-profile-card h2,.student-qr-card h2{margin:0;font-family:Rajdhani,Inter,sans-serif}
+.student-dashboard-grid{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.5fr);gap:16px;align-items:start}
+.student-dashboard-grid .student-qr-card{width:100%;box-sizing:border-box;margin:0}
+.student-events-card{margin-top:0}
+.student-event-list{display:grid;gap:12px;margin-top:16px}
+.student-event-item{padding:14px;border:1px solid rgba(22,77,112,.7);border-radius:10px;background:rgba(255,255,255,.02)}
+.student-event-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.student-event-heading h3{margin:0;font-family:Rajdhani,Inter,sans-serif;font-size:19px}
+.student-event-item p{margin:7px 0 0}
 .student-profile-card .data-form{margin-top:18px}
 .student-qr-card{text-align:center}
 .student-qr-card > div:first-child{text-align:center}
@@ -217,5 +225,5 @@ body::before{
 .login-message{padding:10px 12px;border:1px solid rgba(255,79,109,.35);border-radius:8px;color:#ff9bab;background:rgba(255,79,109,.07);font-size:13px}
 .login-provider-note{margin:12px 0;color:var(--text-secondary);font-size:12px;line-height:1.5}
 
-@media (max-width:760px){.event-grid{grid-template-columns:1fr}.report-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.scanner-card{grid-template-columns:1fr}.scanner-reader{width:100%}}
+@media (max-width:760px){.event-grid{grid-template-columns:1fr}.student-dashboard-grid{grid-template-columns:1fr}.student-dashboard-grid .student-qr-card{max-width:720px;margin:0 auto;width:100%}.report-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.scanner-card{grid-template-columns:1fr}.scanner-reader{width:100%}}
 @media (max-width:600px){.data-form{grid-template-columns:1fr}.form-field-wide{grid-column:auto}.form-actions{grid-column:auto}.filter-toolbar,.section-heading-row{align-items:stretch;flex-direction:column}.search-field{width:100%}.report-filters{grid-template-columns:1fr}.student-header{align-items:flex-start}.attendance-list-toolbar .search-field{margin-top:4px}.weekly-chart{gap:5px}.event-card{padding:13px}}
