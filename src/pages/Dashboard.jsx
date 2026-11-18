@@ -17,7 +17,7 @@ function formatDate(value) {
 }
 
 export default function Dashboard({ profile, onNavigate }) {
-  const [stats, setStats] = useState({ students: 0, faculty: 0, eventsThisMonth: 0, upcomingEvents: 0, attendanceRate: null, recentCount: 0 })
+  const [stats, setStats] = useState({ students: 0, eventsThisMonth: 0, upcomingEvents: 0, attendanceRate: null, recentCount: 0 })
   const [upcomingEvents, setUpcomingEvents] = useState([])
   const [recentAttendance, setRecentAttendance] = useState([])
   const [recentNames, setRecentNames] = useState({})
@@ -29,9 +29,8 @@ export default function Dashboard({ profile, onNavigate }) {
     setErrorMessage('')
     const now = new Date()
     const last30Days = new Date(now.getTime() - 30 * 86400000).toISOString()
-    const [studentsResult, facultyResult, thisMonthResult, upcomingResult, upcomingCountResult, recentResult, totalRecentResult, presentRecentResult] = await Promise.all([
+    const [studentsResult, thisMonthResult, upcomingResult, upcomingCountResult, recentResult, totalRecentResult, presentRecentResult] = await Promise.all([
       supabase.from('students').select('id', { count: 'exact', head: true }),
-      supabase.from('faculty').select('id', { count: 'exact', head: true }),
       supabase.from('events').select('id', { count: 'exact', head: true }).gte('starts_at', startOfMonth(now)).lt('starts_at', endOfMonth(now)),
       supabase.from('events').select('id, name, location, starts_at, ends_at').gte('starts_at', now.toISOString()).order('starts_at').limit(5),
       supabase.from('events').select('id', { count: 'exact', head: true }).gte('starts_at', now.toISOString()),
@@ -39,7 +38,7 @@ export default function Dashboard({ profile, onNavigate }) {
       supabase.from('attendances').select('id', { count: 'exact', head: true }).gte('scanned_at', last30Days).in('status', ['Present', 'Late']),
       supabase.from('attendances').select('id', { count: 'exact', head: true }).gte('scanned_at', last30Days).in('status', ['Present', 'Late', 'Absent'])
     ])
-    const failed = [studentsResult, facultyResult, thisMonthResult, upcomingResult, upcomingCountResult, recentResult, totalRecentResult, presentRecentResult].find((result) => result.error)
+    const failed = [studentsResult, thisMonthResult, upcomingResult, upcomingCountResult, recentResult, totalRecentResult, presentRecentResult].find((result) => result.error)
     if (failed) {
       setErrorMessage(failed.error.message)
       setIsLoading(false)
@@ -51,7 +50,6 @@ export default function Dashboard({ profile, onNavigate }) {
     const present = totalRecentResult.count || 0
     setStats({
       students: studentsResult.count || 0,
-      faculty: facultyResult.count || 0,
       eventsThisMonth: thisMonthResult.count || 0,
       upcomingEvents: upcomingCountResult.count || 0,
       attendanceRate: completed ? Math.round((present / completed) * 100) : null,
@@ -88,9 +86,8 @@ export default function Dashboard({ profile, onNavigate }) {
     return days.map((day) => ({ ...day, height: day.count ? Math.max(8, Math.round((day.count / max) * 100)) : 0 }))
   }, [recentAttendance])
 
-  const totalMembers = stats.students + stats.faculty
   const cards = [
-    { icon: '👥', value: totalMembers, label: 'Total members', trend: `${stats.students} students · ${stats.faculty} faculty` },
+    { icon: '👥', value: stats.students, label: 'Total students', trend: 'Registered students' },
     { icon: '📅', value: stats.eventsThisMonth, label: 'Events this month', trend: 'Scheduled events' },
     { icon: '📈', value: stats.attendanceRate === null ? '—' : `${stats.attendanceRate}%`, label: 'Attendance rate', trend: 'Last 30 days' },
     { icon: '⏳', value: stats.upcomingEvents, label: 'Upcoming events', trend: 'Next events' }

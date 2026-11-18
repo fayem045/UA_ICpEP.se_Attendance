@@ -1,22 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import NavBar from '../components/NavBar'
-import { API_BASE_URL } from '../lib/api'
+import { API_BASE_URL, authFetch } from '../lib/api'
 import { supabase } from '../lib/supabaseClient'
 
 const EMPTY_FORM = { name: '', yearLevel: '' }
 
 async function adminRequest(path, method, values) {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.access_token) throw new Error('Your session expired. Sign in again.')
-
   let response
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await authFetch(path, {
       method,
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        ...(values ? { 'Content-Type': 'application/json' } : {})
-      },
       ...(values ? { body: JSON.stringify(values) } : {})
     })
   } catch (error) {
@@ -41,7 +34,6 @@ export default function Members({ profile, onNavigate }) {
   const [errorMessage, setErrorMessage] = useState('')
   const [message, setMessage] = useState('')
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
   const [editingMember, setEditingMember] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [savingId, setSavingId] = useState('')
@@ -50,18 +42,12 @@ export default function Members({ profile, onNavigate }) {
   async function loadPeople() {
     setIsLoading(true)
     setErrorMessage('')
-    const [studentsResult, facultyResult] = await Promise.all([
-      supabase.from('students').select('id, name, year_level').order('name'),
-      supabase.from('faculty').select('id, name, year_level').order('name')
-    ])
+    const studentsResult = await supabase.from('students').select('id, name, year_level').order('name')
 
-    if (studentsResult.error || facultyResult.error) {
-      setErrorMessage(studentsResult.error?.message || facultyResult.error.message)
+    if (studentsResult.error) {
+      setErrorMessage(studentsResult.error.message)
     } else {
-      setMembers([
-        ...(studentsResult.data || []).map((member) => ({ ...member, type: 'Student' })),
-        ...(facultyResult.data || []).map((member) => ({ ...member, type: 'Faculty' }))
-      ].sort((left, right) => (left.name || '').localeCompare(right.name || '')))
+      setMembers(studentsResult.data || [])
     }
     setIsLoading(false)
   }
@@ -91,18 +77,18 @@ export default function Members({ profile, onNavigate }) {
     setMessage('')
     try {
       const { member: updatedMember } = await adminRequest(
-        `/api/admin/${editingMember.type === 'Faculty' ? 'faculty' : 'students'}/${encodeURIComponent(editingMember.id)}`,
+        `/api/admin/students/${encodeURIComponent(editingMember.id)}`,
         'PATCH',
         { name: form.name.trim(), yearLevel: form.yearLevel.trim() }
       )
       setMembers((current) => current.map((currentMember) => (
-        currentMember.type === editingMember.type && currentMember.id === editingMember.id
+        currentMember.id === editingMember.id
           ? { ...currentMember, name: updatedMember.name, year_level: updatedMember.year_level }
           : currentMember
       )).sort((left, right) => (left.name || '').localeCompare(right.name || '')))
       setEditingMember(null)
       setForm(EMPTY_FORM)
-      setMessage(`${editingMember.type} information updated.`)
+      setMessage('Student information updated.')
     } catch (error) {
       setErrorMessage(error.message || 'Member information could not be updated.')
     } finally {
@@ -111,10 +97,7 @@ export default function Members({ profile, onNavigate }) {
   }
 
   async function deleteMember(member) {
-    const deleteDetails = member.type === 'Student'
-      ? 'This removes the student record, linked attendance records, and linked Supabase sign-in account.'
-      : 'This removes the faculty record.'
-    const confirmed = window.confirm(`Delete ${member.name || member.id}? ${deleteDetails} This cannot be undone.`)
+    const confirmed = window.confirm(`Delete ${member.name || member.id}? This removes the student record, linked attendance records, and linked Supabase sign-in account. This cannot be undone.`)
     if (!confirmed) return
 
     setDeletingId(member.id)
@@ -122,13 +105,13 @@ export default function Members({ profile, onNavigate }) {
     setMessage('')
     try {
       const result = await adminRequest(
-        `/api/admin/${member.type === 'Faculty' ? 'faculty' : 'students'}/${encodeURIComponent(member.id)}`,
+        `/api/admin/students/${encodeURIComponent(member.id)}`,
         'DELETE'
       )
       setMembers((current) => current.filter((currentMember) => (
-        !(currentMember.type === member.type && currentMember.id === member.id)
+        currentMember.id !== member.id
       )))
-      if (editingMember?.id === member.id && editingMember.type === member.type) {
+      if (editingMember?.id === member.id) {
         setEditingMember(null)
         setForm(EMPTY_FORM)
       }
@@ -137,9 +120,9 @@ export default function Members({ profile, onNavigate }) {
       if (error.status === 404) await loadPeople()
       if (error.memberDeleted) {
         setMembers((current) => current.filter((currentMember) => (
-          !(currentMember.type === member.type && currentMember.id === member.id)
+          currentMember.id !== member.id
         )))
-        if (editingMember?.id === member.id && editingMember.type === member.type) {
+        if (editingMember?.id === member.id) {
           setEditingMember(null)
           setForm(EMPTY_FORM)
         }
@@ -153,12 +136,11 @@ export default function Members({ profile, onNavigate }) {
   const visibleMembers = useMemo(() => {
     const query = search.trim().toLowerCase()
     return members.filter((member) => {
-      const matchesType = typeFilter === 'all' || member.type.toLowerCase() === typeFilter
-      const matchesQuery = !query || [member.id, member.name, member.year_level, member.type]
+      const matchesQuery = !query || [member.id, member.name, member.year_level]
         .some((value) => String(value || '').toLowerCase().includes(query))
-      return matchesType && matchesQuery
+      return matchesQuery
     })
-  }, [members, search, typeFilter])
+  }, [members, search])
 
   return (
     <div className="app-shell container">
@@ -166,7 +148,7 @@ export default function Members({ profile, onNavigate }) {
       <div className="dashboard-header">
         <div className="header-left">
           <h1>Members</h1>
-          <p>Registered students and faculty members.</p>
+          <p>Registered students.</p>
         </div>
         <div className="header-actions">
           <strong>{members.length} total</strong>
@@ -179,7 +161,7 @@ export default function Members({ profile, onNavigate }) {
       <section className="card page-card">
         {editingMember && (
           <form className="data-form" onSubmit={saveMember}>
-            <h2 className="section-heading form-field-wide">Edit {editingMember.type.toLowerCase()}</h2>
+            <h2 className="section-heading form-field-wide">Edit student</h2>
             <label className="form-field">
               <span>Member ID (cannot be changed)</span>
               <input value={editingMember.id} readOnly />
@@ -205,28 +187,19 @@ export default function Members({ profile, onNavigate }) {
             <span>Search members</span>
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, ID, year level…" />
           </label>
-          <label className="form-field type-filter">
-            <span>Member type</span>
-            <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-              <option value="all">All members</option>
-              <option value="student">Students</option>
-              <option value="faculty">Faculty</option>
-            </select>
-          </label>
         </div>
 
         {errorMessage && <p className="status-message error" role="alert">{errorMessage}</p>}
         {message && <p className="status-message" role="status">{message}</p>}
         {isLoading ? <p className="muted-text">Loading members…</p> : !errorMessage && visibleMembers.length === 0 ? (
-          <div className="empty-state">{members.length ? 'No members match your search.' : 'No members are registered yet. Add them from the Dashboard QR generator.'}</div>
+          <div className="empty-state">{members.length ? 'No students match your search.' : 'No students are registered yet. Add them from the Dashboard QR generator.'}</div>
         ) : !errorMessage && (
           <div className="table-scroll">
             <table className="table data-table">
-              <thead><tr><th>Type</th><th>ID / Member number</th><th>Name</th><th>Year Level</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Student ID</th><th>Name</th><th>Year Level</th><th>Actions</th></tr></thead>
               <tbody>
                 {visibleMembers.map((member) => (
-                  <tr key={`${member.type}-${member.id}`}>
-                    <td>{member.type}</td>
+                  <tr key={member.id}>
                     <td>{member.id}</td>
                     <td>{member.name || '—'}</td>
                     <td>{member.year_level || '—'}</td>

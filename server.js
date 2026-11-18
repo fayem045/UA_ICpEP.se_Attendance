@@ -35,12 +35,22 @@ function getBearerToken(request) {
   return match?.[1] || ''
 }
 
-async function getStudentProfile(accessToken) {
+async function verifyUser(accessToken) {
   if (!supabaseUrl || !supabaseAnonKey) throw new Error('Supabase URL and anon key are not configured for the backend.')
+  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` }
+  })
+  if (!response.ok) {
+    console.error('Supabase auth check failed:', response.status, await response.text())
+    return null
+  }
+  return response.json()
+}
+
+async function getStudentProfile(accessToken) {
   const headers = { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` }
-  const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, { headers })
-  if (!authResponse.ok) return { error: 'Your sign-in has expired. Log in again.' }
-  const user = await authResponse.json()
+  const user = await verifyUser(accessToken)
+  if (!user) return { error: 'Your sign-in has expired. Log in again.' }
   if (!/\.student@ua\.edu\.ph$/i.test(user.email || '')) return { error: 'A student account is required to create this QR code.' }
 
   const profileUrl = new URL(`${supabaseUrl}/rest/v1/profiles`)
@@ -56,14 +66,10 @@ async function getStudentProfile(accessToken) {
 }
 
 async function getAdminUser(accessToken) {
-  if (!supabaseUrl || !supabaseAnonKey) throw new Error('Supabase URL and anon key are not configured for the backend.')
-  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` }
-  })
-  if (!response.ok) return { error: 'Your sign-in has expired. Log in again.', status: 401 }
-  const user = await response.json()
+  const user = await verifyUser(accessToken)
+  if (!user) return { error: 'Your sign-in has expired. Log in again.', status: 401 }
   if (!adminEmails.has((user.email || '').trim().toLowerCase())) {
-    return { error: 'Administrator access is required for student management.', status: 403 }
+    return { error: 'Administrator access is required for member management.', status: 403 }
   }
   return { user }
 }
@@ -82,6 +88,16 @@ async function readResponse(response) {
 
 async function serviceRequest(url, options = {}) {
   if (!serviceRoleKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured in the backend environment.')
+  if (!serviceRoleKey.startsWith('sb_secret_')) {
+    let role = ''
+    try {
+      role = JSON.parse(Buffer.from(serviceRoleKey.split('.')[1], 'base64url').toString('utf8')).role || ''
+    } catch {}
+    if (role !== 'service_role') {
+      const keyType = serviceRoleKey.startsWith('sb_publishable_') ? 'a publishable/anon key' : 'an invalid key'
+      throw new Error(`SUPABASE_SERVICE_ROLE_KEY is ${keyType}. Set it to this project's Supabase secret key (sb_secret_...) or legacy service_role JWT in the backend .env.local file.`)
+    }
+  }
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -92,14 +108,16 @@ async function serviceRequest(url, options = {}) {
   })
   const data = await readResponse(response)
   if (!response.ok) {
-    const error = new Error(data?.message || `Supabase request failed with status ${response.status}.`)
+    const invalidProjectKey = response.status === 401 && /invalid api key/i.test(data?.message || '')
+    const message = invalidProjectKey
+      ? 'Supabase rejected SUPABASE_SERVICE_ROLE_KEY. Use a secret key from the same project as VITE_SUPABASE_URL.'
+      : data?.message || `Supabase request failed with status ${response.status}.`
+    const error = new Error(message)
     error.status = response.status
     throw error
   }
   return { response, data }
 }
-console.log('service key role:', serviceRoleKey.startsWith('sb_secret_') ? 'secret key' : JSON.parse(Buffer.from(serviceRoleKey.split('.')[1] || 'e30=', 'base64').toString()).role)
-
 app.post('/api/student/qr', async (req, res) => {
   const accessToken = getBearerToken(req)
   if (!accessToken) return res.status(401).json({ message: 'Sign in as a student to request a QR code.' })
@@ -126,7 +144,7 @@ app.patch('/api/admin/:memberType/:memberId', async (req, res) => {
   const accessToken = getBearerToken(req)
   if (!accessToken) return res.status(401).json({ message: 'Sign in as an administrator to edit members.' })
   const { memberType, memberId } = req.params
-  const memberTable = memberType === 'students' || memberType === 'faculty' ? memberType : ''
+  const memberTable = memberType === 'students' ? memberType : ''
   if (!memberTable) return res.status(404).json({ message: 'Member type was not found.' })
   const name = typeof req.body?.name === 'string' ? req.body.name.trim() : ''
   const yearLevel = typeof req.body?.yearLevel === 'string' ? req.body.yearLevel.trim() : null
@@ -137,13 +155,20 @@ app.patch('/api/admin/:memberType/:memberId', async (req, res) => {
   try {
     const auth = await getAdminUser(accessToken)
     if (auth.error) return res.status(auth.status).json({ message: auth.error })
-    const { data: members } = await serviceRequest(tableUrl(memberTable, { id: memberId }), {
+    const { data: updatedMembers } = await serviceRequest(tableUrl(memberTable, { id: memberId }), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: JSON.stringify({ name, year_level: yearLevel || null })
     })
-    const member = members?.[0]
-    if (!member) return res.status(404).json({ message: 'Member record was not found.' })
+    let member = updatedMembers?.[0]
+    if (!member) {
+      const { data: currentMembers } = await serviceRequest(tableUrl(memberTable, { id: memberId }))
+      member = currentMembers?.[0]
+      if (!member) return res.status(404).json({ message: 'Member record was not found.' })
+      if (member.name !== name || String(member.year_level || '') !== (yearLevel || '')) {
+        return res.status(502).json({ message: 'The member exists, but the updated profile could not be confirmed.' })
+      }
+    }
 
     if (memberType === 'students') {
       try {
@@ -168,7 +193,7 @@ app.delete('/api/admin/:memberType/:memberId', async (req, res) => {
   const accessToken = getBearerToken(req)
   if (!accessToken) return res.status(401).json({ message: 'Sign in as an administrator to delete members.' })
   const { memberType, memberId } = req.params
-  const memberTable = memberType === 'students' || memberType === 'faculty' ? memberType : ''
+  const memberTable = memberType === 'students' ? memberType : ''
   if (!memberTable) return res.status(404).json({ message: 'Member type was not found.' })
   if (!memberId || memberId.length > 80) return res.status(400).json({ message: 'Enter a valid member ID.' })
 
@@ -255,13 +280,11 @@ app.delete('/api/admin/:memberType/:memberId', async (req, res) => {
       })
     }
 
-    const message = memberType === 'faculty'
-      ? 'Faculty member deleted.'
-      : accountDeleted
-        ? `Student record, ${deletedAttendanceCount} attendance record(s), and linked Supabase sign-in account deleted.`
-        : profileId
-          ? `Student record and ${deletedAttendanceCount} attendance record(s) deleted. The linked Supabase account was already unavailable.`
-          : `Student record and ${deletedAttendanceCount} attendance record(s) deleted. No linked Supabase sign-in account was found.`
+    const message = accountDeleted
+      ? `Student record, ${deletedAttendanceCount} attendance record(s), and linked Supabase sign-in account deleted.`
+      : profileId
+        ? `Student record and ${deletedAttendanceCount} attendance record(s) deleted. The linked Supabase account was already unavailable.`
+        : `Student record and ${deletedAttendanceCount} attendance record(s) deleted. No linked Supabase sign-in account was found.`
     return res.json({ message, memberDeleted: true })
   } catch (error) {
     console.error('Member deletion failed:', error.message)
@@ -296,5 +319,6 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.listen(port, () => {
+  console.log('Backend Supabase URL:', supabaseUrl || '(missing)', '| anon key set:', Boolean(supabaseAnonKey))
   console.log(`Attendance backend running on http://localhost:${port}`)
 })
