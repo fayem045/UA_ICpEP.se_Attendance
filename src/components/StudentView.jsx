@@ -11,7 +11,7 @@ export default function StudentView({ profile }) {
   const [studentProfile, setStudentProfile] = useState(null)
   const [studentId, setStudentId] = useState('')
   const [fullName, setFullName] = useState('')
-  const [department, setDepartment] = useState('')
+  const [yearLevel, setYearLevel] = useState('')
   const [events, setEvents] = useState([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(true)
   const [eventsError, setEventsError] = useState('')
@@ -27,7 +27,7 @@ export default function StudentView({ profile }) {
     setErrorMessage('')
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, role, student_id, full_name, department')
+      .select('id, email, role, student_id, full_name, year_level')
       .eq('id', profile.id)
       .maybeSingle()
     if (error) setErrorMessage(error.message)
@@ -35,7 +35,7 @@ export default function StudentView({ profile }) {
       setStudentProfile(data)
       setStudentId(data.student_id || '')
       setFullName(data.full_name || profile.user_metadata?.full_name || '')
-      setDepartment(data.department || profile.user_metadata?.department || '')
+      setYearLevel(data.year_level || profile.user_metadata?.year_level || profile.user_metadata?.department || '')
     }
     setIsLoading(false)
   }, [profile])
@@ -102,7 +102,7 @@ export default function StudentView({ profile }) {
       role: 'student',
       student_id: studentId.trim(),
       full_name: fullName.trim(),
-      department: department.trim() || null
+      year_level: yearLevel.trim() || null
     }
     const { data, error } = await supabase.from('profiles').upsert(values, { onConflict: 'id' }).select().single()
     setIsSaving(false)
@@ -149,7 +149,7 @@ export default function StudentView({ profile }) {
           <form className="data-form" onSubmit={saveProfile}>
             <label className="form-field"><span>Student ID</span><input value={studentId} onChange={(event) => setStudentId(event.target.value)} maxLength={80} required /></label>
             <label className="form-field"><span>Full name</span><input value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={160} required /></label>
-            <label className="form-field form-field-wide"><span>Department</span><input value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={160} /></label>
+            <label className="form-field form-field-wide"><span>Year Level</span><input value={yearLevel} onChange={(event) => setYearLevel(event.target.value)} maxLength={160} /></label>
             <button className="neon-button primary form-field-wide" type="submit" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save profile'}</button>
           </form>
         </section>
@@ -159,7 +159,7 @@ export default function StudentView({ profile }) {
             <section className="card student-qr-card">
               <div>
                 <h2>Your permanent attendance QR</h2>
-                <p className="muted-text">{studentProfile.full_name} · {studentProfile.student_id}{studentProfile.department ? ` · ${studentProfile.department}` : ''}</p>
+                <p className="muted-text">{studentProfile.full_name} · {studentProfile.student_id}{studentProfile.year_level ? ` · ${studentProfile.year_level}` : ''}</p>
               </div>
               {errorMessage && <p className="status-message error" role="alert">{errorMessage}</p>}
               {message && <p className="status-message" role="status">{message}</p>}

@@ -72,7 +72,7 @@ export default function Reports({ profile, onNavigate }) {
 
     while (more && loaded.length < MAX_REPORT_ROWS) {
       let query = supabase.from('attendances')
-        .select('id, student_id, event_id, event_name, department, scanned_at, status')
+        .select('id, student_id, event_id, event_name, year_level, scanned_at, status')
         .order('scanned_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1)
       if (eventFilter !== 'all') query = query.eq('event_id', eventFilter)
@@ -96,7 +96,7 @@ export default function Reports({ profile, onNavigate }) {
     const names = {}
     for (let index = 0; index < studentIds.length; index += 100) {
       const chunk = studentIds.slice(index, index + 100)
-      const { data, error } = await supabase.from('students').select('id, name, department').in('id', chunk)
+      const { data, error } = await supabase.from('students').select('id, name, year_level').in('id', chunk)
       if (error) {
         setErrorMessage(error.message)
         setIsLoading(false)
@@ -112,16 +112,16 @@ export default function Reports({ profile, onNavigate }) {
 
   const summary = useMemo(() => {
     const result = { Present: 0, Late: 0, Absent: 0 }
-    const departments = new Map()
+    const yearLevels = new Map()
     const uniqueStudents = new Set()
     for (const record of records) {
       const status = STATUSES.includes(record.status) ? record.status : 'Present'
       result[status] += 1
       if (record.student_id) uniqueStudents.add(record.student_id)
-      const department = record.department || memberNames[record.student_id]?.department || 'Unspecified'
-      departments.set(department, (departments.get(department) || 0) + 1)
+      const yearLevel = record.year_level || memberNames[record.student_id]?.year_level || 'Unspecified'
+      yearLevels.set(yearLevel, (yearLevels.get(yearLevel) || 0) + 1)
     }
-    return { ...result, uniqueStudents: uniqueStudents.size, departments: [...departments.entries()].sort((a, b) => b[1] - a[1]) }
+    return { ...result, uniqueStudents: uniqueStudents.size, yearLevels: [...yearLevels.entries()].sort((a, b) => b[1] - a[1]) }
   }, [records, memberNames])
 
   const total = summary.Present + summary.Late + summary.Absent
@@ -129,11 +129,11 @@ export default function Reports({ profile, onNavigate }) {
 
   function exportReport() {
     const rows = [
-      ['Student ID', 'Name', 'Department', 'Event', 'Scanned at', 'Status'],
+      ['Student ID', 'Name', 'Year Level', 'Event', 'Scanned at', 'Status'],
       ...records.map((record) => [
         record.student_id,
         memberNames[record.student_id]?.name || '',
-        record.department || memberNames[record.student_id]?.department || '',
+        record.year_level || memberNames[record.student_id]?.year_level || '',
         record.event_name,
         record.scanned_at,
         record.status
@@ -190,9 +190,9 @@ export default function Reports({ profile, onNavigate }) {
           })}
         </section>
         <section className="card page-card">
-          <h2 className="section-heading">By department</h2>
-          {summary.departments.length ? <ul className="report-department-list">
-            {summary.departments.map(([department, count]) => <li key={department}><span>{department}</span><strong>{count}</strong></li>)}
+          <h2 className="section-heading">By year level</h2>
+          {summary.yearLevels.length ? <ul className="report-year-level-list">
+            {summary.yearLevels.map(([yearLevel, count]) => <li key={yearLevel}><span>{yearLevel}</span><strong>{count}</strong></li>)}
           </ul> : <p className="muted-text">No records in this range.</p>}
         </section>
       </div>
@@ -202,11 +202,11 @@ export default function Reports({ profile, onNavigate }) {
         {isLoading ? <p className="muted-text">Loading report…</p> : records.length === 0 ? <div className="empty-state">No attendance records match this report.</div> : (
           <div className="table-scroll">
             <table className="table data-table">
-              <thead><tr><th>Student ID</th><th>Name</th><th>Department</th><th>Event</th><th>Scanned at</th><th>Status</th></tr></thead>
+              <thead><tr><th>Student ID</th><th>Name</th><th>Year Level</th><th>Event</th><th>Scanned at</th><th>Status</th></tr></thead>
               <tbody>{records.map((record) => <tr key={record.id}>
                 <td>{record.student_id || '—'}</td>
                 <td>{memberNames[record.student_id]?.name || '—'}</td>
-                <td>{record.department || memberNames[record.student_id]?.department || '—'}</td>
+                <td>{record.year_level || memberNames[record.student_id]?.year_level || '—'}</td>
                 <td>{record.event_name || 'General Assembly'}</td>
                 <td>{formatDate(record.scanned_at)}</td>
                 <td><span className={`badge ${String(record.status || 'Present').toLowerCase()}`}>{record.status || 'Present'}</span></td>

@@ -6,7 +6,7 @@ export default function QRGenerator() {
   const [role, setRole] = useState('student')
   const [studentId, setStudentId] = useState('')
   const [name, setName] = useState('')
-  const [department, setDepartment] = useState('')
+  const [yearLevel, setYearLevel] = useState('')
   const [savedMembers, setSavedMembers] = useState([])
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -17,8 +17,8 @@ export default function QRGenerator() {
     setIsLoading(true)
     setErrorMessage('')
     const [studentsResult, facultyResult] = await Promise.all([
-      supabase.from('students').select('id, name, department').order('name'),
-      supabase.from('faculty').select('id, name, department').order('name')
+      supabase.from('students').select('id, name, year_level').order('name'),
+      supabase.from('faculty').select('id, name, year_level').order('name')
     ])
     if (studentsResult.error || facultyResult.error) {
       setErrorMessage(studentsResult.error?.message || facultyResult.error.message)
@@ -40,8 +40,8 @@ export default function QRGenerator() {
     student_id: studentId.trim(),
     id: studentId.trim(),
     name: name.trim(),
-    department: department.trim()
-  }) : '', [role, studentId, name, department, readyForQr])
+    year_level: yearLevel.trim()
+  }) : '', [role, studentId, name, yearLevel, readyForQr])
 
   async function saveMember(event) {
     event.preventDefault()
@@ -53,12 +53,12 @@ export default function QRGenerator() {
     }
 
     setIsSaving(true)
-    const member = { id: studentId.trim(), name: name.trim(), department: department.trim() || null }
+    const member = { id: studentId.trim(), name: name.trim(), year_level: yearLevel.trim() || null }
     const table = role === 'faculty' ? 'faculty' : 'students'
     const { data, error } = await supabase
       .from(table)
       .upsert(member, { onConflict: 'id' })
-      .select('id, name, department')
+      .select('id, name, year_level')
       .single()
     setIsSaving(false)
 
@@ -93,8 +93,8 @@ export default function QRGenerator() {
           <input id="qr-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={160} required />
         </div>
         <div className="qr-field">
-          <label htmlFor="qr-department">Department / Unit</label>
-          <input id="qr-department" value={department} onChange={(event) => setDepartment(event.target.value)} maxLength={160} />
+          <label htmlFor="qr-year-level">Year Level</label>
+          <input id="qr-year-level" value={yearLevel} onChange={(event) => setYearLevel(event.target.value)} maxLength={160} />
         </div>
         <button className="neon-button primary qr-save" type="submit" disabled={isSaving}>
           {isSaving ? 'Saving…' : 'Save member'}
@@ -130,7 +130,7 @@ export default function QRGenerator() {
           <div className="qr-saved-member" key={`${member.role}-${member.id}`}>
             <strong>{member.name}</strong>
             <span>{member.id}</span>
-            <small>{member.role === 'faculty' ? 'Faculty' : 'Student'} · {member.department || 'No department'}</small>
+            <small>{member.role === 'faculty' ? 'Faculty' : 'Student'} · {member.year_level || 'No year level'}</small>
           </div>
         ))}
       </div>

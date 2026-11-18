@@ -53,13 +53,13 @@ export default function Attendance({ profile, onNavigate }) {
     setErrorMessage('')
     const attendanceQuery = supabase
       .from('attendances')
-      .select('id, student_id, event_id, event_name, department, scanned_at, status')
+      .select('id, student_id, event_id, event_name, year_level, scanned_at, status')
       .order('scanned_at', { ascending: false })
     if (eventId) attendanceQuery.eq('event_id', eventId)
     else attendanceQuery.is('event_id', null).eq('event_name', eventName)
 
     const [studentsResult, attendanceResult] = await Promise.all([
-      supabase.from('students').select('id, name, department').order('name'),
+      supabase.from('students').select('id, name, year_level').order('name'),
       attendanceQuery
     ])
     if (studentsResult.error || attendanceResult.error) {
@@ -86,7 +86,7 @@ export default function Attendance({ profile, onNavigate }) {
     const status = record?.status || 'Absent'
     const matchesStatus = !statusFilter || status === statusFilter
     const query = search.trim().toLowerCase()
-    const matchesSearch = !query || [student.id, student.name, student.department]
+    const matchesSearch = !query || [student.id, student.name, student.year_level]
       .some((value) => String(value || '').toLowerCase().includes(query))
     return matchesStatus && matchesSearch
   }), [students, attendanceByStudent, statusFilter, search])
@@ -100,14 +100,14 @@ export default function Attendance({ profile, onNavigate }) {
 
     const result = attendance
       ? await supabase.from('attendances').update({ status }).eq('id', attendance.id)
-        .select('id, student_id, event_id, event_name, department, scanned_at, status').single()
+        .select('id, student_id, event_id, event_name, year_level, scanned_at, status').single()
       : await supabase.from('attendances').insert({
         student_id: student.id,
         event_id: eventId || null,
         event_name: eventName,
-        department: student.department || null,
+        year_level: student.year_level || null,
         status
-      }).select('id, student_id, event_id, event_name, department, scanned_at, status').single()
+      }).select('id, student_id, event_id, event_name, year_level, scanned_at, status').single()
 
     setIsSavingId('')
     if (result.error) {
@@ -209,7 +209,7 @@ export default function Attendance({ profile, onNavigate }) {
         ) : (
           <div className="table-scroll">
             <table className="table attendance-table data-table">
-              <thead><tr><th>Student</th><th>ID</th><th>Department</th><th>Status</th><th>Last updated</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Student</th><th>ID</th><th>Year Level</th><th>Status</th><th>Last updated</th><th>Actions</th></tr></thead>
               <tbody>
                 {visibleStudents.map((student) => {
                   const record = attendanceByStudent.get(student.id)
@@ -220,7 +220,7 @@ export default function Attendance({ profile, onNavigate }) {
                     <tr key={student.id}>
                       <td>{student.name || '—'}</td>
                       <td>{student.id}</td>
-                      <td>{student.department || '—'}</td>
+                      <td>{student.year_level || '—'}</td>
                       <td><select aria-label={`Attendance status for ${student.name || student.id}`} value={status} onChange={(event) => setSelectedStatuses((current) => ({ ...current, [student.id]: event.target.value }))}>{STATUSES.map((value) => <option key={value}>{value}</option>)}</select></td>
                       <td>{formatDate(record?.scanned_at)}</td>
                       <td className="attendance-row-actions">
