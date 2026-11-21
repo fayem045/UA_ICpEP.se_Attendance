@@ -29,7 +29,7 @@ The frontend defaults to `http://localhost:4000` for the backend API. Change `VI
 
 Use the configured project database with tables for `students`, `attendances`, `profiles`, and `events`. Apply the SQL migrations in `supabase/migrations` so the schema matches the app and authenticated students can read the event schedule; keep event creation, updates, and deletion restricted to admins. The app's policies should restrict roster and attendance management to admins. Student users can read and update only their own student profile. Do not replace existing management or profile policies with broad `using (true)` policies.
 
-Create admin users in Supabase Authentication and assign their profile role as `admin`. Add their email to `VITE_ADMIN_EMAILS` when it is not the built-in admin email. Student accounts must use an address ending in `.student@ua.edu.ph`; the app creates a student profile when the account is registered.
+Create admin users in Supabase Authentication and assign their profile role as `admin`. Add their email to `VITE_ADMIN_EMAILS` when it is not the built-in admin email. Student accounts must use an address ending in `.student@ua.edu.ph`. After confirming the sign-up email and signing in, students complete their profile in the portal.
 
 In Supabase Auth, enable email confirmation and add the local frontend URLs to the redirect allowlist, including `http://localhost:5173/**` and `http://127.0.0.1:5173/**` (and the corresponding port 5174 URLs if using that port). Configure Google or Facebook providers later, after creating their OAuth application credentials.
 
