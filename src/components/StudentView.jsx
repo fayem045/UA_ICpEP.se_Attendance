@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { supabase } from '../lib/supabaseClient'
-import { API_BASE_URL } from '../lib/api'
 
 function formatDate(value) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
@@ -15,10 +14,8 @@ export default function StudentView({ profile }) {
   const [events, setEvents] = useState([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(true)
   const [eventsError, setEventsError] = useState('')
-  const [qrToken, setQrToken] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [message, setMessage] = useState('')
 
@@ -63,34 +60,6 @@ export default function StudentView({ profile }) {
     return () => window.removeEventListener('focus', loadEvents)
   }, [loadEvents])
 
-  const generateQr = useCallback(async () => {
-    if (!studentProfile?.student_id) return
-    setIsGenerating(true)
-    setErrorMessage('')
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) throw new Error('Your session expired. Sign in again to get a QR code.')
-      const response = await fetch(`${API_BASE_URL}/api/student/qr`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`
-        }
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.message || 'QR code could not be generated.')
-      setQrToken(data.qrToken)
-    } catch (error) {
-      setErrorMessage(error.message || 'QR code could not be generated.')
-    } finally {
-      setIsGenerating(false)
-    }
-  }, [studentProfile])
-
-  useEffect(() => {
-    if (studentProfile?.student_id) generateQr()
-  }, [studentProfile?.student_id, generateQr])
-
   async function saveProfile(event) {
     event.preventDefault()
     setIsSaving(true)
@@ -112,7 +81,6 @@ export default function StudentView({ profile }) {
     }
     setStudentProfile(data)
     setMessage('Student profile saved. Your QR is ready.')
-    setQrToken('')
   }
 
   async function signOut() {
@@ -163,17 +131,16 @@ export default function StudentView({ profile }) {
               </div>
               {errorMessage && <p className="status-message error" role="alert">{errorMessage}</p>}
               {message && <p className="status-message" role="status">{message}</p>}
-              {qrToken ? (
-                <div className="student-qr-code"><QRCode value={qrToken} size={240} /></div>
-              ) : (
-                <div className="qr-placeholder">{isGenerating ? 'Preparing your permanent QR…' : 'Your QR is not available yet.'}</div>
-              )}
+              <div style={{ background: '#ffffff', padding: 20, borderRadius: 12, display: 'inline-block', lineHeight: 0 }}>
+                <QRCode
+                  value={String(studentProfile.student_id)}
+                  size={240}
+                  level="L"
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+              </div>
               <p className="muted-text">Use this QR for attendance at chapter events. It does not expire.</p>
-              {!qrToken && (
-                <button className="neon-button primary" type="button" onClick={generateQr} disabled={isGenerating}>
-                  {isGenerating ? 'Preparing…' : 'Retry QR'}
-                </button>
-              )}
               <button className="text-button" type="button" onClick={() => { setStudentProfile(null); setMessage('') }}>Edit profile</button>
             </section>
 

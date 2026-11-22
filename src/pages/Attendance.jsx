@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import NavBar from '../components/NavBar'
 import QRScanner from '../components/QRScanner'
 import { supabase } from '../lib/supabaseClient'
+import { getEventEnd } from '../lib/attendanceStatus'
 
 const STATUSES = ['Present', 'Late', 'Absent']
 
@@ -20,19 +21,21 @@ export default function Attendance({ profile, onNavigate }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingId, setIsSavingId] = useState('')
   const [isDeletingId, setIsDeletingId] = useState('')
+  const [isMarkingAbsentees, setIsMarkingAbsentees] = useState(false)
   const [eventsError, setEventsError] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [message, setMessage] = useState('')
 
   const selectedEvent = events.find((event) => event.id === eventId)
   const eventName = selectedEvent?.name || 'General Assembly'
+  const eventEnded = Boolean(selectedEvent && new Date() > getEventEnd(selectedEvent))
 
   useEffect(() => {
     let active = true
     async function loadEvents() {
       const { data, error } = await supabase
         .from('events')
-        .select('id, name, starts_at')
+        .select('id, name, starts_at, ends_at')
         .order('starts_at', { ascending: true })
       if (!active) return
       if (error) setEventsError(error.message)
@@ -135,8 +138,42 @@ export default function Attendance({ profile, onNavigate }) {
     }
   }
 
-  async function handleScanned(result) {
+  function handleScanned(result) {
     setMessage(result.message)
+    if (result.record) {
+      setAttendanceRecords((current) => [
+        result.record,
+        ...current.filter((record) => record.id !== result.record.id)
+      ])
+    }
+  }
+
+  async function markAbsentees() {
+    if (!eventEnded || !window.confirm('Mark all unscanned students as Absent?')) return
+    const missing = students.filter((student) => !attendanceByStudent.has(student.id))
+    if (!missing.length) {
+      setMessage('Everyone already has a record.')
+      return
+    }
+
+    setIsMarkingAbsentees(true)
+    setErrorMessage('')
+    setMessage('')
+    const { error } = await supabase.from('attendances').insert(
+      missing.map((student) => ({
+        student_id: student.id,
+        event_id: eventId || null,
+        event_name: eventName,
+        year_level: student.year_level || null,
+        status: 'Absent'
+      }))
+    )
+    setIsMarkingAbsentees(false)
+    if (error) {
+      setErrorMessage(error.message)
+      return
+    }
+    setMessage(`${missing.length} students marked Absent.`)
     await loadAttendance()
   }
 
@@ -153,7 +190,12 @@ export default function Attendance({ profile, onNavigate }) {
           <h1>Attendance</h1>
           <p>Scan student QR codes or update attendance records for an event.</p>
         </div>
-        <button className="neon-button" type="button" onClick={loadAttendance} disabled={isLoading}>{isLoading ? 'Refreshing…' : 'Refresh'}</button>
+        <div className="header-actions">
+          <button className="neon-button" type="button" onClick={markAbsentees} disabled={!eventEnded || isLoading || isMarkingAbsentees}>
+            {isMarkingAbsentees ? 'Marking…' : 'Mark absentees'}
+          </button>
+          <button className="neon-button" type="button" onClick={loadAttendance} disabled={isLoading}>{isLoading ? 'Refreshing…' : 'Refresh'}</button>
+        </div>
       </div>
 
       <section className="card page-card attendance-card">
@@ -188,7 +230,13 @@ export default function Attendance({ profile, onNavigate }) {
             <h2 className="section-heading">Scan attendance</h2>
             <p className="muted-text">Allow camera access to scan a student QR code.</p>
           </div>
-          <QRScanner eventId={eventId || null} eventName={eventName} onRecorded={handleScanned} />
+          <QRScanner
+            eventId={eventId || null}
+            eventName={eventName}
+            eventStartsAt={selectedEvent?.starts_at || null}
+            students={students}
+            onRecorded={handleScanned}
+          />
         </div>
 
         <div className="filter-toolbar attendance-list-toolbar">

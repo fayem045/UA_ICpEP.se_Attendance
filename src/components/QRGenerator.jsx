@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { supabase } from '../lib/supabaseClient'
 
@@ -27,14 +27,7 @@ export default function QRGenerator() {
   useEffect(() => { loadMembers() }, [])
 
   const readyForQr = Boolean(studentId.trim() && name.trim())
-  const payload = useMemo(() => readyForQr ? JSON.stringify({
-    role: 'student',
-    label: 'Student',
-    student_id: studentId.trim(),
-    id: studentId.trim(),
-    name: name.trim(),
-    year_level: yearLevel.trim()
-  }) : '', [studentId, name, yearLevel, readyForQr])
+  const payload = readyForQr ? studentId.trim() : ''
 
   async function saveMember(event) {
     event.preventDefault()
@@ -93,7 +86,9 @@ export default function QRGenerator() {
         <div>
           <h4 className="qr-section-title">QR preview</h4>
           {readyForQr ? (
-            <div className="qr-code-box"><QRCode value={payload} size={180} /></div>
+            <div className="qr-code-box" style={{ background: '#fff', padding: 16 }}>
+              <QRCode value={payload} size={220} level="M" />
+            </div>
           ) : <div className="qr-placeholder">Enter an ID and name to preview a QR.</div>}
         </div>
         <div className="qr-payload">
@@ -112,11 +107,21 @@ export default function QRGenerator() {
         {isLoading ? <p className="qr-empty">Loading saved students…</p> : savedMembers.length === 0 ? (
           <p className="qr-empty">No students saved yet.</p>
         ) : savedMembers.map((member) => (
-          <div className="qr-saved-member" key={member.id}>
+          <button
+            className="qr-saved-member"
+            type="button"
+            key={member.id}
+            onClick={() => {
+              setStudentId(member.id)
+              setName(member.name || '')
+              setYearLevel(member.year_level || '')
+            }}
+            aria-label={`Load ${member.name || member.id} into QR preview`}
+          >
             <strong>{member.name}</strong>
             <span>{member.id}</span>
             <small>Student · {member.year_level || 'No year level'}</small>
-          </div>
+          </button>
         ))}
       </div>
     </div>

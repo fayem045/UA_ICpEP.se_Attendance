@@ -10,7 +10,7 @@ Attendance management app for the ICpEP.UA Chapter. Admins can manage members an
 - Event create, edit, and delete flows.
 - Event-based QR scanning, manual attendance status updates, duplicate protection, and refreshable roster.
 - Attendance reports with date/event filters, status and year-level summaries, and CSV export.
-- Student dashboard with a chapter event schedule and signed, non-expiring attendance QR.
+- Student dashboard with a chapter event schedule and permanent student-ID attendance QR.
 - Google and Facebook sign-in are intentionally deferred until provider credentials are configured in Supabase.
 
 ## Run locally
@@ -35,4 +35,4 @@ In Supabase Auth, enable email confirmation and add the local frontend URLs to t
 
 ## QR scanning
 
-Camera scanning needs browser camera permission and works on `localhost` or an HTTPS site. Student QR tokens are signed by the backend, do not expire, and can be scanned into an event. Admin-generated roster QRs are static JSON codes for in-person roster use.
+Camera scanning needs browser camera permission and works on `localhost` or an HTTPS site. Student and admin-generated QRs encode the roster student ID; older signed student QR tokens remain supported. Officers can enter an ID manually if camera scanning is unavailable.

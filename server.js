@@ -100,7 +100,8 @@ async function serviceRequest(url, options = {}) {
   }
   const response = await fetch(url, {
     ...options,
-    headers: {
+    headers: 
+    {
       apikey: serviceRoleKey,
       Authorization: `Bearer ${serviceRoleKey}`,
       ...(options.headers || {})
