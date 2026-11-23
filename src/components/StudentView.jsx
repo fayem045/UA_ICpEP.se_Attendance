@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { supabase } from '../lib/supabaseClient'
+import NavBar from './NavBar'
 
 function formatDate(value) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
@@ -83,12 +84,28 @@ export default function StudentView({ profile }) {
     setMessage('Student profile saved. Your QR is ready.')
   }
 
-  async function signOut() {
-    await supabase.auth.signOut()
-    window.location.reload()
+  function navigate(page) {
+    if (page === 'events') {
+      document.getElementById('student-events')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (isLoading) return <main className="app-shell container"><div className="card">Loading student profile…</div></main>
+  if (isLoading) {
+    return (
+      <main className="app-shell container">
+        <NavBar
+          activePage="dashboard"
+          onNavigate={navigate}
+          profile={profile}
+          navigationPages={[['dashboard', 'Dashboard'], ['events', 'Events']]}
+          navigationLabel="Student navigation"
+        />
+        <div className="card">Loading student profile…</div>
+      </main>
+    )
+  }
 
   const profileComplete = Boolean(studentProfile?.student_id && studentProfile?.full_name)
   const sortedEvents = [...events].sort((first, second) => {
@@ -100,17 +117,16 @@ export default function StudentView({ profile }) {
 
   return (
     <main className="app-shell container student-portal">
-      <header className="student-header">
-        <div>
-          <p className="login-kicker">SECURE ATTENDANCE PORTAL</p>
-          <h1>Student Dashboard</h1>
-          <p className="muted-text">{profile.email}</p>
-        </div>
-        <button className="neon-button" type="button" onClick={signOut}>Sign out</button>
-      </header>
+      <NavBar
+        activePage="dashboard"
+        onNavigate={navigate}
+        profile={profile}
+        navigationPages={[['dashboard', 'Dashboard'], ['events', 'Events']]}
+        navigationLabel="Student navigation"
+      />
 
       {!profileComplete ? (
-        <section className="card student-profile-card">
+        <section id="student-dashboard" className="card student-profile-card">
           <h2>Complete your student profile</h2>
           <p className="muted-text">Add your member ID and name so attendance scans match your student record.</p>
           {errorMessage && <p className="status-message error" role="alert">{errorMessage}</p>}
@@ -144,7 +160,7 @@ export default function StudentView({ profile }) {
               <button className="text-button" type="button" onClick={() => { setStudentProfile(null); setMessage('') }}>Edit profile</button>
             </section>
 
-            <section className="card student-events-card">
+            <section id="student-events" className="card student-events-card">
               <div className="section-heading-row">
                 <div>
                   <h2 className="section-heading">Chapter events</h2>

@@ -12,7 +12,14 @@ const pages = [
   ['reports', 'Reports']
 ]
 
-export default function NavBar({ chapter = 'ICpEP.UA Chapter', activePage = 'dashboard', onNavigate, profile }) {
+export default function NavBar({
+  chapter = 'ICpEP.UA Chapter',
+  activePage = 'dashboard',
+  onNavigate,
+  profile,
+  navigationPages = pages,
+  navigationLabel = 'Admin navigation'
+}) {
   const [accountOpen, setAccountOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
 
@@ -31,7 +38,7 @@ export default function NavBar({ chapter = 'ICpEP.UA Chapter', activePage = 'das
   }
 
   return (
-    <header className="top-nav">
+    <header className="top-nav app-shell-nav">
       <a className="brand" href="#dashboard" onClick={(event) => navigate(event, 'dashboard')} aria-label="ICpEP.UA Chapter dashboard">
         <img id="brand-logo" src={logo} alt="ICpEP logo" />
         <span>
@@ -40,8 +47,8 @@ export default function NavBar({ chapter = 'ICpEP.UA Chapter', activePage = 'das
         </span>
       </a>
 
-      <nav className="nav-links" aria-label="Admin navigation">
-        {pages.map(([page, label]) => (
+      <nav className="nav-links" aria-label={navigationLabel}>
+        {navigationPages.map(([page, label]) => (
           <a
             className={activePage === page ? 'active' : ''}
             href={`#${page}`}

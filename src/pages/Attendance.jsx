@@ -203,7 +203,6 @@ export default function Attendance({ profile, onNavigate }) {
           <label className="attendance-event-select">
             <span>Event</span>
             <select value={eventId} onChange={(event) => setEventId(event.target.value)}>
-              <option value="">General Assembly (legacy)</option>
               {events.map((event) => <option key={event.id} value={event.id}>{event.name}</option>)}
             </select>
           </label>

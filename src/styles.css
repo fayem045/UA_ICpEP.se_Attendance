@@ -38,6 +38,8 @@ body::before{
 .app-shell{position:relative; z-index:1; width:100%; min-height:100vh; box-sizing:border-box; padding:clamp(12px, 2.5vw, 28px)}
 .container{max-width:1200px;margin:0 auto}
 .app-shell.container{max-width:none;margin:0}
+/* Top navigation */
+.app-shell-nav{display:flex;align-items:center;gap:18px;padding:12px 18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(22,77,112,0.8);border-radius:12px;box-shadow:0 4px 30px rgba(13,41,66,0.3);}
 
 /* Top navigation */
 .top-nav{display:flex;align-items:center;gap:18px;padding:12px 18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(22,77,112,0.8);border-radius:12px;box-shadow:0 4px 30px rgba(13,41,66,0.3);}
