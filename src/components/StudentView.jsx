@@ -86,6 +86,28 @@ export default function StudentView({ profile }) {
     return () => window.removeEventListener('focus', loadEvents)
   }, [loadEvents])
 
+  useEffect(() => {
+    const id = studentProfile?.student_id
+    if (!id) return
+
+    const channel = supabase
+      .channel(`attendance-${id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'attendances', filter: `student_id=eq.${id}` },
+        () => loadAttendance(id)
+      )
+      .subscribe()
+
+    const onFocus = () => loadAttendance(id)
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [studentProfile?.student_id, loadAttendance])
+
   async function saveProfile(event) {
     event.preventDefault()
     setIsSaving(true)
