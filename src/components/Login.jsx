@@ -231,7 +231,7 @@ export default function Login() {
             )}
           </div>
 
-          {!isSignUp && (
+          {isSignUp && (
             <button className="login-confirmation-resend" disabled={busy} onClick={handleResendConfirmation} type="button">
               {resending ? 'Sending...' : 'Resend confirmation email'}
             </button>
