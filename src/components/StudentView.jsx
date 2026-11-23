@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient'
 import NavBar from './NavBar'
 
 function formatDate(value) {
+  if (!value) return 'Not scanned'
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
@@ -12,13 +13,37 @@ export default function StudentView({ profile }) {
   const [studentId, setStudentId] = useState('')
   const [fullName, setFullName] = useState('')
   const [yearLevel, setYearLevel] = useState('')
+  const [attendanceRecords, setAttendanceRecords] = useState([])
+  const [isLoadingAttendance, setIsLoadingAttendance] = useState(true)
+  const [attendanceError, setAttendanceError] = useState('')
   const [events, setEvents] = useState([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(true)
   const [eventsError, setEventsError] = useState('')
+  const [activeNav, setActiveNav] = useState('dashboard')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [message, setMessage] = useState('')
+
+  const loadAttendance = useCallback(async (id) => {
+    if (!id) {
+      setAttendanceRecords([])
+      setIsLoadingAttendance(false)
+      return
+    }
+    setIsLoadingAttendance(true)
+    setAttendanceError('')
+    const { data, error } = await supabase
+      .from('attendances')
+      .select('id, event_id, event_name, scanned_at, status')
+      .eq('student_id', id)
+      .order('scanned_at', { ascending: false })
+    if (error) {
+      setAttendanceError(error.message)
+      setAttendanceRecords([])
+    } else setAttendanceRecords(data || [])
+    setIsLoadingAttendance(false)
+  }, [])
 
   const loadProfile = useCallback(async () => {
     setIsLoading(true)
@@ -34,9 +59,10 @@ export default function StudentView({ profile }) {
       setStudentId(data.student_id || '')
       setFullName(data.full_name || profile.user_metadata?.full_name || '')
       setYearLevel(data.year_level || profile.user_metadata?.year_level || profile.user_metadata?.department || '')
+      await loadAttendance(data.student_id)
     }
     setIsLoading(false)
-  }, [profile])
+  }, [loadAttendance, profile])
 
   useEffect(() => { loadProfile() }, [loadProfile])
 
@@ -47,7 +73,6 @@ export default function StudentView({ profile }) {
       .from('events')
       .select('id, name, description, location, starts_at, ends_at')
       .order('starts_at', { ascending: true })
-
     if (error) {
       setEventsError(error.message)
       setEvents([])
@@ -81,10 +106,16 @@ export default function StudentView({ profile }) {
       return
     }
     setStudentProfile(data)
+    await loadAttendance(data.student_id)
     setMessage('Student profile saved. Your QR is ready.')
   }
 
   function navigate(page) {
+    setActiveNav(page)
+    if (page === 'attendance') {
+      document.getElementById('student-attendance')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
     if (page === 'events') {
       document.getElementById('student-events')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
@@ -92,22 +123,6 @@ export default function StudentView({ profile }) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (isLoading) {
-    return (
-      <main className="app-shell container">
-        <NavBar
-          activePage="dashboard"
-          onNavigate={navigate}
-          profile={profile}
-          navigationPages={[['dashboard', 'Dashboard'], ['events', 'Events']]}
-          navigationLabel="Student navigation"
-        />
-        <div className="card">Loading student profile…</div>
-      </main>
-    )
-  }
-
-  const profileComplete = Boolean(studentProfile?.student_id && studentProfile?.full_name)
   const sortedEvents = [...events].sort((first, second) => {
     const firstUpcoming = new Date(first.starts_at).getTime() >= Date.now()
     const secondUpcoming = new Date(second.starts_at).getTime() >= Date.now()
@@ -115,14 +130,33 @@ export default function StudentView({ profile }) {
     return new Date(first.starts_at).getTime() - new Date(second.starts_at).getTime()
   })
 
+  if (isLoading) {
+    return (
+      <main className="app-shell container">
+        <NavBar
+          activePage={activeNav}
+          onNavigate={navigate}
+          profile={profile}
+          navigationPages={[['dashboard', 'Dashboard'], ['attendance', 'Attendance'], ['events', 'Events']]}
+          navigationLabel="Student navigation"
+          hideNotification
+        />
+        <div className="card">Loading student profile…</div>
+      </main>
+    )
+  }
+
+  const profileComplete = Boolean(studentProfile?.student_id && studentProfile?.full_name)
+
   return (
     <main className="app-shell container student-portal">
       <NavBar
-        activePage="dashboard"
+        activePage={activeNav}
         onNavigate={navigate}
         profile={profile}
-        navigationPages={[['dashboard', 'Dashboard'], ['events', 'Events']]}
+        navigationPages={[['dashboard', 'Dashboard'], ['attendance', 'Attendance'], ['events', 'Events']]}
         navigationLabel="Student navigation"
+        hideNotification
       />
 
       {!profileComplete ? (
@@ -160,39 +194,79 @@ export default function StudentView({ profile }) {
               <button className="text-button" type="button" onClick={() => { setStudentProfile(null); setMessage('') }}>Edit profile</button>
             </section>
 
-            <section id="student-events" className="card student-events-card">
+            <section id="student-attendance" className="card student-events-card">
               <div className="section-heading-row">
                 <div>
-                  <h2 className="section-heading">Chapter events</h2>
-                  <p className="muted-text">View upcoming and past events.</p>
+                  <h2 className="section-heading">My attendance</h2>
+                  <p className="muted-text">View your chapter attendance records.</p>
                 </div>
-                <button className="text-button" type="button" onClick={loadEvents} disabled={isLoadingEvents}>
-                  {isLoadingEvents ? 'Refreshing…' : 'Refresh'}
+                <button className="text-button" type="button" onClick={() => loadAttendance(studentProfile.student_id)} disabled={isLoadingAttendance}>
+                  {isLoadingAttendance ? 'Refreshing…' : 'Refresh'}
                 </button>
               </div>
-              {eventsError && <p className="status-message error" role="alert">Could not load events: {eventsError}</p>}
-              {isLoadingEvents ? <p className="muted-text">Loading events…</p> : sortedEvents.length === 0 ? (
-                <div className="empty-state">No events have been scheduled yet.</div>
+              {attendanceError && <p className="status-message error" role="alert">Could not load attendance: {attendanceError}</p>}
+              {isLoadingAttendance ? <p className="muted-text">Loading attendance…</p> : attendanceRecords.length === 0 ? (
+                <div className="empty-state">No attendance records yet.</div>
               ) : (
-                <div className="student-event-list">
-                  {sortedEvents.map((event) => {
-                    const upcoming = new Date(event.starts_at).getTime() >= Date.now()
+                <div className="table-wrap">
+                  <table className="table data-table">
+                    <thead>
+                      <tr>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {attendanceRecords.map((record) => {
+                        const status = record.status || 'Absent'
+                        const statusClass = status.toLowerCase()
                     return (
-                      <article className="student-event-item" key={event.id}>
-                        <div className="student-event-heading">
-                          <h3>{event.name}</h3>
-                          <span className={`badge ${upcoming ? 'present' : 'late'}`}>{upcoming ? 'Upcoming' : 'Past'}</span>
-                        </div>
-                        <p className="muted-text">{formatDate(event.starts_at)}{event.ends_at ? ` – ${formatDate(event.ends_at)}` : ''}</p>
-                        {event.location && <p>{event.location}</p>}
-                        {event.description && <p className="event-description">{event.description}</p>}
-                      </article>
+                      <tr key={record.id}>
+                        <td>{record.event_name || 'General Assembly'}</td>
+                        <td>{formatDate(record.scanned_at)}</td>
+                        <td><span className={`badge ${statusClass}`}>{status}</span></td>
+                      </tr>
                     )
-                  })}
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </section>
           </div>
+          <section id="student-events" className="card student-events-card student-events-full">
+            <div className="section-heading-row">
+              <div>
+                <h2 className="section-heading">Chapter events</h2>
+                <p className="muted-text">View upcoming and past chapter events.</p>
+              </div>
+              <button className="text-button" type="button" onClick={loadEvents} disabled={isLoadingEvents}>
+                {isLoadingEvents ? 'Refreshing…' : 'Refresh'}
+              </button>
+            </div>
+            {eventsError && <p className="status-message error" role="alert">Could not load events: {eventsError}</p>}
+            {isLoadingEvents ? <p className="muted-text">Loading events…</p> : sortedEvents.length === 0 ? (
+              <div className="empty-state">No events have been scheduled yet.</div>
+            ) : (
+              <div className="student-event-list">
+                {sortedEvents.map((event) => {
+                  const upcoming = new Date(event.starts_at).getTime() >= Date.now()
+                  return (
+                    <article className="student-event-item" key={event.id}>
+                      <div className="student-event-heading">
+                        <h3>{event.name}</h3>
+                        <span className={`badge ${upcoming ? 'present' : 'late'}`}>{upcoming ? 'Upcoming' : 'Past'}</span>
+                      </div>
+                      <p className="muted-text">{formatDate(event.starts_at)}{event.ends_at ? ` – ${formatDate(event.ends_at)}` : ''}</p>
+                      {event.location && <p>{event.location}</p>}
+                      {event.description && <p className="event-description">{event.description}</p>}
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </section>
         </>
       )}
     </main>

@@ -18,7 +18,8 @@ export default function NavBar({
   onNavigate,
   profile,
   navigationPages = pages,
-  navigationLabel = 'Admin navigation'
+  navigationLabel = 'Admin navigation',
+  hideNotification = false
 }) {
   const [accountOpen, setAccountOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -63,9 +64,11 @@ export default function NavBar({
 
       <div className="spacer" />
       <div className="nav-account">
-        <button className="icon-btn" type="button" title="Open events" aria-label="Open events" onClick={() => onNavigate?.('events')}>
-          <img src={bellIcon} alt="" />
-        </button>
+        {!hideNotification && (
+          <button className="icon-btn" type="button" title="Open events" aria-label="Open events" onClick={() => onNavigate?.('events')}>
+            <img src={bellIcon} alt="" />
+          </button>
+        )}
         <button
           className="icon-btn"
           type="button"
